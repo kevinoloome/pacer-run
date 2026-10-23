@@ -1,0 +1,153 @@
+import { supabase } from "./supabaseClient";
+import { formatPace } from "./pace";
+
+// Maps a raw Supabase `runs` row (snake_case, matching schema.sql plus
+// 0002_auth_and_joins.sql) into the camelCase shape the components expect.
+//
+// `run_joins` comes back as an embedded aggregate (`run_joins(count)` in the
+// select below), so `row.run_joins` is `[{ count: N }]`. The four seed runs
+// from schema.sql also carry a legacy `joined` text[] (initials, no real
+// accounts behind them), so joinedCount adds both together rather than
+// picking one, that way the seed rows still look populated while real joins
+// count correctly on top. Identical logic to pacer-native's runs.js, since
+// both apps read from the same Supabase project and tables.
+function mapRun(row, myJoinedRunIds) {
+  const realJoinedCount = row.run_joins?.[0]?.count ?? 0;
+  const legacyJoined = row.joined ?? [];
+
+  return {
+    id: row.id,
+    location: row.location,
+    when: row.when_text,
+    distance: `${row.distance_km} km`,
+    distanceKm: row.distance_km,
+    surface: row.surface,
+    dayCat: row.day_cat,
+    pace: `${formatPace(row.pace_sec)} /km`,
+    paceMinSec: row.pace_sec,
+    weather: { icon: row.weather_icon, temp: row.weather_temp, rain: row.weather_rain },
+    note: row.note,
+    host: row.host_name,
+    hostVerified: row.host_verified,
+    hostMeta: row.host_meta,
+    hostPhoto: row.host_photo,
+    hostId: row.host_id,
+    capacity: row.capacity,
+    joinedInitials: legacyJoined,
+    joinedCount: legacyJoined.length + realJoinedCount,
+    isJoinedByMe: myJoinedRunIds.has(row.id),
+  };
+}
+
+// Fetches every run plus how many real (post-launch) joins each has, and,
+// when signed in, which of those the current user has already joined.
+// `userId` is optional: Discover works the same for signed-out visitors,
+// just without the "you're in" state.
+export async function fetchRuns(userId) {
+  const { data, error } = await supabase
+    .from("runs")
+    .select("*, run_joins(count)")
+    .order("created_at", { ascending: false });
+
+  if (error) throw error;
+
+  let myJoinedRunIds = new Set();
+  if (userId) {
+    const { data: myJoins, error: joinsError } = await supabase
+      .from("run_joins")
+      .select("run_id")
+      .eq("user_id", userId);
+    if (joinsError) throw joinsError;
+    myJoinedRunIds = new Set((myJoins ?? []).map((r) => r.run_id));
+  }
+
+  return data.map((row) => mapRun(row, myJoinedRunIds));
+}
+
+// Result shapes for joinRun, so callers can tell "joined", "already joined"
+// (not an error, just a no-op) and "full" apart from a real failure.
+export const JOIN_RESULT = {
+  JOINED: "joined",
+  ALREADY_JOINED: "already_joined",
+  FULL: "full",
+};
+
+// Joins a run on behalf of the signed-in user. Capacity is checked
+// client-side first using the count already loaded for this run (for an
+// instant "this run is full" message), and enforced again by a database
+// trigger that catches the race where two people join the last spot at the
+// same instant.
+export async function joinRun(run, userId) {
+  if (run.isJoinedByMe) return JOIN_RESULT.ALREADY_JOINED;
+  if (run.joinedCount >= run.capacity) return JOIN_RESULT.FULL;
+
+  const { error } = await supabase
+    .from("run_joins")
+    .insert({ run_id: run.id, user_id: userId });
+
+  if (error) {
+    // 23505 = unique_violation (Postgres code): already joined, treat as success.
+    if (error.code === "23505") return JOIN_RESULT.ALREADY_JOINED;
+    // P0001 with message "run_full": the database's own capacity trigger
+    // caught a race the client-side check above missed.
+    if (error.code === "P0001" || /run_full/.test(error.message ?? "")) {
+      return JOIN_RESULT.FULL;
+    }
+    throw error;
+  }
+  return JOIN_RESULT.JOINED;
+}
+
+export async function leaveRun(runId, userId) {
+  const { error } = await supabase
+    .from("run_joins")
+    .delete()
+    .eq("run_id", runId)
+    .eq("user_id", userId);
+  if (error) throw error;
+}
+
+// Inserts a new run, hosted by the signed-in user. `input` uses the same
+// camelCase shape the rest of the app reads, mapped to the snake_case
+// columns schema.sql defines.
+export async function postRun(input, userId, hostName) {
+  const { data, error } = await supabase
+    .from("runs")
+    .insert({
+      location: input.location,
+      when_text: input.whenText,
+      distance_km: input.distanceKm,
+      surface: input.surface,
+      day_cat: input.dayCat,
+      pace_sec: input.paceSec,
+      note: input.note || null,
+      capacity: input.capacity,
+      host_id: userId,
+      host_name: hostName,
+      host_verified: false,
+      host_photo: false,
+    })
+    .select()
+    .single();
+
+  if (error) throw error;
+  return data;
+}
+
+export async function fetchMyProfile(userId) {
+  const { data, error } = await supabase
+    .from("profiles")
+    .select("*")
+    .eq("id", userId)
+    .maybeSingle();
+  if (error) throw error;
+  return data;
+}
+
+export async function updateMyProfile(userId, fields) {
+  const { error } = await supabase
+    .from("profiles")
+    .update(fields)
+    .eq("id", userId);
+  if (error) throw error;
+}

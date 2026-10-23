@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation";
 import { matchBadge } from "@/lib/pace";
 import { fetchRuns, joinRun, leaveRun, fetchMyProfile, updateMyProfile, JOIN_RESULT } from "@/lib/runs";
 import { defaultPaceRange } from "@/lib/mockData";
+import SwipeDeck from "./SwipeDeck";
 import { useAuth } from "@/lib/AuthProvider";
 import { getLocalPace, PACE_CHANGED_EVENT } from "@/lib/localPace";
 
@@ -46,6 +47,7 @@ export default function RunList() {
   const [status, setStatus] = useState("loading"); // 'loading' | 'ready' | 'error'
   const [paceOnly, setPaceOnly] = useState(false);
   const [dayFilter, setDayFilter] = useState("all");
+  const [view, setView] = useState("swipe"); // 'swipe' | 'list'
   const [busyId, setBusyId] = useState(null);
   const [toast, setToast] = useState("");
   const [authPrompt, setAuthPrompt] = useState(false);
@@ -105,17 +107,18 @@ export default function RunList() {
     setTimeout(() => setToast(""), 2600);
   }
 
+  // Resolves to true only when the person is now in the run.
   async function handleJoin(run) {
     if (!user) {
       setAuthPrompt(true);
-      return;
+      return false;
     }
     setBusyId(run.id);
     try {
       const result = await joinRun(run, user.id);
       if (result === JOIN_RESULT.FULL) {
         showToast("This run is full.");
-        return;
+        return false;
       }
       setRuns((prev) =>
         prev.map((r) =>
@@ -128,9 +131,11 @@ export default function RunList() {
             : r
         )
       );
+      return true;
     } catch (err) {
       console.error("Failed to join run:", err);
       showToast("Couldn't join this run, try again.");
+      return false;
     } finally {
       setBusyId(null);
     }
@@ -224,8 +229,21 @@ export default function RunList() {
       {status === "ready" && (
         <>
           <div className="flex items-center justify-between mb-3">
-            <div className="font-display font-bold text-[17px]">
-              {visible.length} {visible.length === 1 ? "run" : "runs"}
+            <div className="flex rounded-full border border-line bg-bg-elevated p-0.5">
+              {[
+                { value: "swipe", label: "Swipe" },
+                { value: "list", label: "List" },
+              ].map((v) => (
+                <button
+                  key={v.value}
+                  onClick={() => setView(v.value)}
+                  className={`rounded-full px-4 py-1.5 text-[12.5px] font-semibold ${
+                    view === v.value ? "bg-accent text-bg" : "text-muted"
+                  }`}
+                >
+                  {v.label}
+                </button>
+              ))}
             </div>
             <Link
               href="/post"
@@ -261,7 +279,15 @@ export default function RunList() {
             ))}
           </div>
 
-          {visible.length === 0 ? (
+          {view === "swipe" && runs.length > 0 ? (
+            <SwipeDeck
+              runs={visible}
+              paceRange={paceRange}
+              userId={user?.id}
+              onJoin={handleJoin}
+              onShowList={() => setView("list")}
+            />
+          ) : visible.length === 0 ? (
             <div className="flex flex-col items-center justify-center text-center border border-dashed border-line rounded-[18px] p-8 text-muted">
               <div className="font-display text-text text-[17px] mb-1">
                 {runs.length === 0 ? "No runs yet" : "No runs match these filters"}

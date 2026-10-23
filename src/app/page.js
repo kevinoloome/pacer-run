@@ -8,7 +8,7 @@ export default function Home() {
       <Onboarding />
       <div className="mx-auto max-w-[430px] min-h-screen flex flex-col">
         <TopBar />
-        <main className="flex-1 pb-24">
+        <main className="flex-1 pb-24 overflow-x-clip">
           <RunList />
         </main>
       </div>

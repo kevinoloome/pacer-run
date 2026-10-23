@@ -2,6 +2,7 @@ import { Space_Grotesk, Inter, IBM_Plex_Mono } from "next/font/google";
 import "./globals.css";
 import { AuthProvider } from "@/lib/AuthProvider";
 import BottomNav from "@/components/BottomNav";
+import Splash from "@/components/Splash";
 
 const spaceGrotesk = Space_Grotesk({
   variable: "--font-display",
@@ -34,6 +35,7 @@ export default function RootLayout({ children }) {
     >
       <body className="min-h-full flex flex-col bg-bg text-text font-body">
         <AuthProvider>
+          <Splash />
           {children}
           <BottomNav />
         </AuthProvider>

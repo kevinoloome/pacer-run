@@ -89,11 +89,12 @@ export default function Onboarding() {
                 How Pacer works
               </h2>
               <ul className="flex flex-col gap-4">
-                <Point icon="♡">
-                  <b className="text-text">Swipe right</b> (or tap the heart) on a run to join it.
+                <Point icon="🔎">
+                  <b className="text-text">Browse the list</b> of runs that people have posted.
                 </Point>
-                <Point icon="✕">
-                  <b className="text-text">Swipe left</b> (or tap the cross) to skip it.
+                <Point icon="✓">
+                  Tap <b className="text-text">Join</b> on the ones you like. A badge shows how close
+                  each run is to your pace.
                 </Point>
                 <Point icon="➕">
                   Tap <b className="text-text">Post</b> to host your own run and invite others.

@@ -1,5 +1,5 @@
 import TopBar from "@/components/TopBar";
-import DiscoverDeck from "@/components/DiscoverDeck";
+import RunList from "@/components/RunList";
 import Onboarding from "@/components/Onboarding";
 
 export default function Home() {
@@ -9,7 +9,7 @@ export default function Home() {
       <div className="mx-auto max-w-[430px] min-h-screen flex flex-col">
         <TopBar />
         <main className="flex-1 pb-24">
-          <DiscoverDeck />
+          <RunList />
         </main>
       </div>
     </div>

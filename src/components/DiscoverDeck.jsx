@@ -4,9 +4,10 @@ import { useState, useRef, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import RunCard from "./RunCard";
 import { matchBadge } from "@/lib/pace";
-import { fetchRuns, joinRun, fetchMyProfile, JOIN_RESULT } from "@/lib/runs";
+import { fetchRuns, joinRun, fetchMyProfile, updateMyProfile, JOIN_RESULT } from "@/lib/runs";
 import { defaultPaceRange } from "@/lib/mockData";
 import { useAuth } from "@/lib/AuthProvider";
+import { getLocalPace, PACE_CHANGED_EVENT } from "@/lib/localPace";
 
 export default function DiscoverDeck() {
   const router = useRouter();
@@ -19,6 +20,7 @@ export default function DiscoverDeck() {
   const [dragX, setDragX] = useState(0);
   const [exiting, setExiting] = useState(null); // 'left' | 'right' | null
   const [toast, setToast] = useState("");
+  const [authPrompt, setAuthPrompt] = useState(false);
   const dragState = useRef({ dragging: false, startX: 0 });
 
   useEffect(() => {
@@ -31,11 +33,22 @@ export default function DiscoverDeck() {
         if (cancelled) return;
         setAllRuns(runs);
 
+        // Pace priority: saved profile > pace picked in onboarding > default.
+        const local = getLocalPace();
         if (user) {
           const profile = await fetchMyProfile(user.id);
           if (!cancelled && profile?.pace_min_sec && profile?.pace_max_sec) {
             setPaceRange({ min: profile.pace_min_sec, max: profile.pace_max_sec });
+          } else if (!cancelled && local) {
+            setPaceRange(local);
+            // First sign-in after onboarding: save their pick to the profile.
+            updateMyProfile(user.id, {
+              pace_min_sec: local.min,
+              pace_max_sec: local.max,
+            }).catch((err) => console.error("Couldn't save pace to profile:", err));
           }
+        } else if (local) {
+          setPaceRange(local);
         }
         if (!cancelled) setStatus("ready");
       } catch (err) {
@@ -49,6 +62,21 @@ export default function DiscoverDeck() {
       cancelled = true;
     };
   }, [user, authLoading]);
+
+  // Onboarding finishes after this component has mounted, so pick up the
+  // pace it saved right away (signed-out visitors only; profile wins otherwise).
+  useEffect(() => {
+    function onPaceChanged() {
+      if (user) return;
+      const local = getLocalPace();
+      if (local) {
+        setPaceRange(local);
+        setDeckIndex(0);
+      }
+    }
+    window.addEventListener(PACE_CHANGED_EVENT, onPaceChanged);
+    return () => window.removeEventListener(PACE_CHANGED_EVENT, onPaceChanged);
+  }, [user]);
 
   const pool = paceFilterOn
     ? allRuns.filter((r) => matchBadge(r.paceMinSec, paceRange).cls === "great")
@@ -68,10 +96,6 @@ export default function DiscoverDeck() {
   }
 
   async function handleJoin(run) {
-    if (!user) {
-      router.push("/sign-in");
-      return;
-    }
     try {
       const result = await joinRun(run, user.id);
       if (result === JOIN_RESULT.FULL) {
@@ -93,6 +117,12 @@ export default function DiscoverDeck() {
   }
 
   function swipe(direction, run) {
+    // Joining needs an account: keep the card in place and ask them to sign up.
+    if (direction === "right" && !user) {
+      setDragX(0);
+      setAuthPrompt(true);
+      return;
+    }
     if (direction === "right") handleJoin(run);
     setExiting(direction);
     setTimeout(advance, 250);
@@ -127,6 +157,41 @@ export default function DiscoverDeck() {
       {toast && (
         <div className="fixed top-4 left-1/2 -translate-x-1/2 z-50 bg-bg-elevated border border-line text-text text-[12.5px] px-4 py-2.5 rounded-xl shadow-lg">
           {toast}
+        </div>
+      )}
+
+      {authPrompt && (
+        <div
+          className="fixed inset-0 z-[60] bg-black/60 flex items-end justify-center"
+          onClick={() => setAuthPrompt(false)}
+        >
+          <div
+            className="w-full max-w-[430px] bg-bg-elevated border-t border-line rounded-t-3xl px-6 pt-6 pb-8"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <h3 className="font-display font-bold text-[19px] mb-1.5">Create a free account to join</h3>
+            <p className="text-muted text-[13px] mb-5">
+              It takes under a minute. You can keep browsing without one.
+            </p>
+            <button
+              onClick={() => router.push("/sign-up")}
+              className="w-full bg-accent text-bg font-display font-bold text-[15px] rounded-2xl py-3.5 mb-2.5"
+            >
+              Create account
+            </button>
+            <button
+              onClick={() => router.push("/sign-in")}
+              className="w-full bg-bg border border-line text-text font-display font-semibold text-[14px] rounded-2xl py-3 mb-2"
+            >
+              I already have an account
+            </button>
+            <button
+              onClick={() => setAuthPrompt(false)}
+              className="w-full text-center text-[12.5px] text-muted py-1"
+            >
+              Not now
+            </button>
+          </div>
         </div>
       )}
 

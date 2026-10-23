@@ -12,7 +12,7 @@ const TABS_SIGNED_IN = [
 
 const TABS_SIGNED_OUT = [
   { href: "/", label: "Discover", icon: "🧭" },
-  { href: "/sign-in", label: "Sign in", icon: "👤" },
+  { href: "/sign-up", label: "Sign up", icon: "👤", alsoActive: ["/sign-in"] },
 ];
 
 // Fixed bottom tab bar, the web equivalent of pacer-native's tab navigator.
@@ -29,7 +29,7 @@ export default function BottomNav() {
     <nav className="fixed bottom-0 left-0 right-0 z-50 border-t border-line bg-bg-elevated">
       <div className="mx-auto max-w-[430px] flex">
         {tabs.map((tab) => {
-          const active = pathname === tab.href;
+          const active = pathname === tab.href || (tab.alsoActive ?? []).includes(pathname);
           return (
             <Link
               key={tab.href}

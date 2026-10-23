@@ -48,11 +48,19 @@ export default function RunCard({ run, paceRange, style, dragHandlers, dimmed })
           {badge.text}
         </div>
 
-        {run.isJoinedByMe && (
-          <div className="absolute top-3 right-3.5 text-[10px] font-semibold px-2.5 py-1 rounded-full backdrop-blur-sm bg-accent text-bg">
-            You&apos;re in
-          </div>
-        )}
+        <div className="absolute top-3 right-3.5 flex flex-col items-end gap-1">
+          {run.isJoinedByMe && (
+            <div className="text-[10px] font-semibold px-2.5 py-1 rounded-full backdrop-blur-sm bg-accent text-bg">
+              You&apos;re in
+            </div>
+          )}
+          {/* Seed/demo runs have no real host account behind them. */}
+          {!run.hostId && (
+            <div className="text-[10px] font-semibold px-2.5 py-1 rounded-full backdrop-blur-sm bg-black/40 text-[#D8DCE1] border border-white/20">
+              Example run
+            </div>
+          )}
+        </div>
 
         <div className="absolute inset-0 bg-gradient-to-t from-[rgba(10,14,17,0.95)] via-[rgba(10,14,17,0.35)] to-transparent flex flex-col justify-end p-4">
           <div className="font-display font-bold text-[19px] text-white leading-tight">

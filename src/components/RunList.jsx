@@ -131,6 +131,7 @@ export default function RunList() {
             : r
         )
       );
+      showToast("You're in! Find it under My runs.");
       return true;
     } catch (err) {
       console.error("Failed to join run:", err);
@@ -423,10 +424,14 @@ function RunItem({ run, paceRange, isMine, busy, onJoin, onLeave }) {
           </div>
 
           {isMine ? (
-            <div className="text-[12px] text-muted">You&apos;re hosting</div>
+            <Link href={`/runs/${run.id}`} className="text-[12.5px] font-semibold text-accent">
+              Details &amp; chat &rsaquo;
+            </Link>
           ) : run.isJoinedByMe ? (
             <div className="flex items-center gap-3">
-              <span className="text-[12.5px] font-semibold text-accent">&#10003; You&apos;re in</span>
+              <Link href={`/runs/${run.id}`} className="text-[12.5px] font-semibold text-accent">
+                Details &amp; chat &rsaquo;
+              </Link>
               <button
                 onClick={onLeave}
                 disabled={busy}

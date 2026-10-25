@@ -151,3 +151,69 @@ export async function updateMyProfile(userId, fields) {
     .eq("id", userId);
   if (error) throw error;
 }
+
+// Runs the signed-in user is hosting or has joined, newest first.
+export async function fetchMyRuns(userId) {
+  const { data: joins, error: joinsError } = await supabase
+    .from("run_joins")
+    .select("run_id")
+    .eq("user_id", userId);
+  if (joinsError) throw joinsError;
+
+  const joinedIds = (joins ?? []).map((j) => j.run_id);
+  let query = supabase.from("runs").select("*, run_joins(count)");
+  query = joinedIds.length
+    ? query.or(`host_id.eq.${userId},id.in.(${joinedIds.join(",")})`)
+    : query.eq("host_id", userId);
+
+  const { data, error } = await query.order("created_at", { ascending: false });
+  if (error) throw error;
+
+  const joinedSet = new Set(joinedIds);
+  return data.map((row) => mapRun(row, joinedSet));
+}
+
+// One run by id, or null if it doesn't exist.
+export async function fetchRun(runId, userId) {
+  const { data, error } = await supabase
+    .from("runs")
+    .select("*, run_joins(count)")
+    .eq("id", runId)
+    .maybeSingle();
+  if (error) throw error;
+  if (!data) return null;
+
+  let joinedSet = new Set();
+  if (userId) {
+    const { data: mine, error: mineError } = await supabase
+      .from("run_joins")
+      .select("run_id")
+      .eq("run_id", runId)
+      .eq("user_id", userId);
+    if (mineError) throw mineError;
+    joinedSet = new Set((mine ?? []).map((r) => r.run_id));
+  }
+  return mapRun(data, joinedSet);
+}
+
+// Names of the signed-up people who joined a run, earliest first.
+export async function fetchParticipants(runId) {
+  const { data: joins, error } = await supabase
+    .from("run_joins")
+    .select("user_id, joined_at")
+    .eq("run_id", runId)
+    .order("joined_at", { ascending: true });
+  if (error) throw error;
+
+  const ids = (joins ?? []).map((j) => j.user_id);
+  if (ids.length === 0) return [];
+
+  const { data: profiles, error: profilesError } = await supabase
+    .from("profiles")
+    .select("id, display_name")
+    .in("id", ids);
+  if (profilesError) throw profilesError;
+
+  const names = new Map((profiles ?? []).map((p) => [p.id, p.display_name]));
+  return ids.map((id) => ({ id, name: names.get(id) || "Runner" }));
+}

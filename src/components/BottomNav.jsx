@@ -6,6 +6,7 @@ import { useAuth } from "@/lib/AuthProvider";
 
 const TABS_SIGNED_IN = [
   { href: "/", label: "Discover", icon: "🧭" },
+  { href: "/runs", label: "My runs", icon: "🏃" },
   { href: "/post", label: "Post", icon: "➕" },
   { href: "/profile", label: "Profile", icon: "👤" },
 ];
@@ -29,7 +30,10 @@ export default function BottomNav() {
     <nav className="fixed bottom-0 left-0 right-0 z-50 border-t border-line bg-bg-elevated">
       <div className="mx-auto max-w-[430px] flex">
         {tabs.map((tab) => {
-          const active = pathname === tab.href || (tab.alsoActive ?? []).includes(pathname);
+          const active =
+            pathname === tab.href ||
+            (tab.href !== "/" && pathname.startsWith(`${tab.href}/`)) ||
+            (tab.alsoActive ?? []).includes(pathname);
           return (
             <Link
               key={tab.href}

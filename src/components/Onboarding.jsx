@@ -96,6 +96,10 @@ export default function Onboarding() {
                   <b className="text-text">Swipe left</b> (or tap the cross) to skip it. Prefer a
                   list? Switch to <b className="text-text">List</b> at the top.
                 </Point>
+                <Point icon="🏃">
+                  Joined runs live under <b className="text-text">My runs</b>, with the meeting
+                  place on a map and a chat with the group.
+                </Point>
                 <Point icon="➕">
                   Tap <b className="text-text">Post</b> to host your own run and invite others.
                 </Point>

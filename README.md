@@ -80,3 +80,13 @@ not one-off hex codes. If the palette ever changes, it only needs to change in o
 Post a Run, Matches, Profile, and the safety features (verification, live location
 sharing, report/block) all still need to be rebuilt as real screens. See
 `pacer-requirements-and-timeline.md` in the main project docs for the phased plan.
+
+## Run chat and My runs
+
+Joined and hosted runs live under **My runs** (`/runs`). Each run has a page
+(`/runs/[id]`) with the meeting place (Open in Google Maps), who's going, and a
+group chat limited to the host and the people who joined.
+
+Chat needs one extra table. In the Supabase SQL Editor, run
+`supabase/0003_run_chat.sql` once, after `schema.sql` and
+`0002_auth_and_joins.sql`.

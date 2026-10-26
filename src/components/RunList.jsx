@@ -120,6 +120,10 @@ export default function RunList() {
         showToast("This run is full.");
         return false;
       }
+      if (result === JOIN_RESULT.CLOSED) {
+        showToast("This run is no longer open.");
+        return false;
+      }
       setRuns((prev) =>
         prev.map((r) =>
           r.id === run.id
@@ -163,7 +167,18 @@ export default function RunList() {
     }
   }
 
-  const visible = runs.filter((r) => {
+  // Discover shows only runs that are still open, soonest first. Runs with no
+  // date (the sample runs) go after the dated ones.
+  const open = runs
+    .filter((r) => !r.cancelled && !r.isPast)
+    .sort((a, b) => {
+      if (a.startsAt && b.startsAt) return new Date(a.startsAt) - new Date(b.startsAt);
+      if (a.startsAt) return -1;
+      if (b.startsAt) return 1;
+      return 0;
+    });
+
+  const visible = open.filter((r) => {
     if (paceOnly && matchBadge(r.paceMinSec, paceRange).cls !== "great") return false;
     if (dayFilter !== "all" && r.dayCat !== dayFilter) return false;
     return true;
@@ -280,7 +295,7 @@ export default function RunList() {
             ))}
           </div>
 
-          {view === "swipe" && runs.length > 0 ? (
+          {view === "swipe" && open.length > 0 ? (
             <SwipeDeck
               runs={visible}
               paceRange={paceRange}
@@ -291,10 +306,10 @@ export default function RunList() {
           ) : visible.length === 0 ? (
             <div className="flex flex-col items-center justify-center text-center border border-dashed border-line rounded-[18px] p-8 text-muted">
               <div className="font-display text-text text-[17px] mb-1">
-                {runs.length === 0 ? "No runs yet" : "No runs match these filters"}
+                {open.length === 0 ? "No runs yet" : "No runs match these filters"}
               </div>
               <div className="text-[13px] mb-4">
-                {runs.length === 0
+                {open.length === 0
                   ? "Be the first to post one for your running family."
                   : "Try clearing a filter, or post your own run."}
               </div>

@@ -1,5 +1,6 @@
 import { supabase } from "./supabaseClient";
 import { formatPace } from "./pace";
+import { formatWhen, isPastRun } from "./when";
 
 // Maps a raw Supabase `runs` row (snake_case, matching schema.sql plus
 // 0002_auth_and_joins.sql) into the camelCase shape the components expect.
@@ -18,7 +19,10 @@ function mapRun(row, myJoinedRunIds) {
   return {
     id: row.id,
     location: row.location,
-    when: row.when_text,
+    when: row.starts_at ? formatWhen(row.starts_at) : row.when_text,
+    startsAt: row.starts_at ?? null,
+    cancelled: !!row.cancelled_at,
+    isPast: isPastRun(row.starts_at),
     distance: `${row.distance_km} km`,
     distanceKm: row.distance_km,
     surface: row.surface,
@@ -70,6 +74,7 @@ export const JOIN_RESULT = {
   JOINED: "joined",
   ALREADY_JOINED: "already_joined",
   FULL: "full",
+  CLOSED: "closed", // cancelled, or already started
 };
 
 // Joins a run on behalf of the signed-in user. Capacity is checked
@@ -79,6 +84,7 @@ export const JOIN_RESULT = {
 // same instant.
 export async function joinRun(run, userId) {
   if (run.isJoinedByMe) return JOIN_RESULT.ALREADY_JOINED;
+  if (run.cancelled || run.isPast) return JOIN_RESULT.CLOSED;
   if (run.joinedCount >= run.capacity) return JOIN_RESULT.FULL;
 
   const { error } = await supabase
@@ -90,6 +96,7 @@ export async function joinRun(run, userId) {
     if (error.code === "23505") return JOIN_RESULT.ALREADY_JOINED;
     // P0001 with message "run_full": the database's own capacity trigger
     // caught a race the client-side check above missed.
+    if (/run_cancelled/.test(error.message ?? "")) return JOIN_RESULT.CLOSED;
     if (error.code === "P0001" || /run_full/.test(error.message ?? "")) {
       return JOIN_RESULT.FULL;
     }
@@ -115,7 +122,8 @@ export async function postRun(input, userId, hostName) {
     .from("runs")
     .insert({
       location: input.location,
-      when_text: input.whenText,
+      when_text: formatWhen(input.startsAt),
+      starts_at: input.startsAt,
       distance_km: input.distanceKm,
       surface: input.surface,
       day_cat: input.dayCat,
@@ -216,4 +224,34 @@ export async function fetchParticipants(runId) {
 
   const names = new Map((profiles ?? []).map((p) => [p.id, p.display_name]));
   return ids.map((id) => ({ id, name: names.get(id) || "Runner" }));
+}
+
+// Host edits their own run. `input` has the same shape as for postRun.
+export async function updateRun(runId, userId, input) {
+  const { error } = await supabase
+    .from("runs")
+    .update({
+      location: input.location,
+      when_text: formatWhen(input.startsAt),
+      starts_at: input.startsAt,
+      distance_km: input.distanceKm,
+      surface: input.surface,
+      day_cat: input.dayCat,
+      pace_sec: input.paceSec,
+      note: input.note || null,
+      capacity: input.capacity,
+    })
+    .eq("id", runId)
+    .eq("host_id", userId);
+  if (error) throw error;
+}
+
+// Host cancels their own run. The run disappears from Discover and can't be joined.
+export async function cancelRun(runId, userId) {
+  const { error } = await supabase
+    .from("runs")
+    .update({ cancelled_at: new Date().toISOString() })
+    .eq("id", runId)
+    .eq("host_id", userId);
+  if (error) throw error;
 }

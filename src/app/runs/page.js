@@ -28,8 +28,11 @@ function MyRuns() {
     };
   }, [user.id]);
 
-  const hosting = runs.filter((r) => r.hostId === user.id);
-  const going = runs.filter((r) => r.hostId !== user.id);
+  const isOver = (r) => r.cancelled || r.isPast;
+  const upcoming = runs.filter((r) => !isOver(r));
+  const hosting = upcoming.filter((r) => r.hostId === user.id);
+  const going = upcoming.filter((r) => r.hostId !== user.id);
+  const over = runs.filter(isOver);
 
   return (
     <div className="px-5 py-6 max-w-[430px] mx-auto pb-28">
@@ -73,11 +76,14 @@ function MyRuns() {
       {status === "ready" && hosting.length > 0 && (
         <Section title="Hosting" runs={hosting} tag="Hosting" />
       )}
+      {status === "ready" && over.length > 0 && (
+        <Section title="Past & cancelled" runs={over} tag="" dim />
+      )}
     </div>
   );
 }
 
-function Section({ title, runs, tag }) {
+function Section({ title, runs, tag, dim }) {
   return (
     <div className="mb-7">
       <div className="text-[12px] font-semibold text-muted uppercase tracking-wider mb-2.5">
@@ -88,16 +94,26 @@ function Section({ title, runs, tag }) {
           <Link
             key={run.id}
             href={`/runs/${run.id}`}
-            className="block rounded-2xl border border-line bg-bg-elevated p-4 active:opacity-80"
+            className={`block rounded-2xl border border-line bg-bg-elevated p-4 active:opacity-80 ${dim ? "opacity-60" : ""}`}
           >
             <div className="flex items-start justify-between gap-3">
               <div className="min-w-0">
                 <div className="font-display font-bold text-[16px] leading-tight">{run.location}</div>
                 <div className="text-[12.5px] text-muted mt-1">{run.when}</div>
               </div>
-              <span className="shrink-0 text-[10px] font-semibold px-2.5 py-1 rounded-full bg-accent/15 text-accent border border-accent/30">
-                {tag}
-              </span>
+              {(tag || run.cancelled || run.isPast) && (
+                <span
+                  className={`shrink-0 text-[10px] font-semibold px-2.5 py-1 rounded-full border ${
+                    run.cancelled
+                      ? "bg-accent-warm/10 text-accent-warm border-accent-warm/30"
+                      : run.isPast
+                        ? "bg-bg text-muted border-line"
+                        : "bg-accent/15 text-accent border-accent/30"
+                  }`}
+                >
+                  {run.cancelled ? "Cancelled" : run.isPast ? "Finished" : tag}
+                </span>
+              )}
             </div>
             <div className="flex items-center justify-between mt-3 text-[12px] text-muted">
               <span className="font-mono">

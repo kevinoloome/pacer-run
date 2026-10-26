@@ -5,7 +5,7 @@ import Link from "next/link";
 import { useParams } from "next/navigation";
 import RequireAuth from "@/components/RequireAuth";
 import { useAuth } from "@/lib/AuthProvider";
-import { fetchRun, fetchParticipants, fetchMyProfile } from "@/lib/runs";
+import { fetchRun, fetchParticipants, fetchMyProfile, cancelRun } from "@/lib/runs";
 import { fetchMessages, sendMessage, subscribeToMessages } from "@/lib/chat";
 
 const POLL_MS = 8000;
@@ -68,6 +68,32 @@ function RunDetail() {
   const isHost = run.hostId === user.id;
   const isMember = isHost || run.isJoinedByMe;
 
+  async function handleCancel() {
+    if (
+      !window.confirm(
+        "Cancel this run? It will be removed from Discover and everyone who joined will see that it was cancelled."
+      )
+    )
+      return;
+    try {
+      await cancelRun(run.id, user.id);
+      setRun((r) => ({ ...r, cancelled: true }));
+      // Let the group know in the chat (best effort).
+      try {
+        const profile = await fetchMyProfile(user.id);
+        await sendMessage(
+          run.id,
+          user.id,
+          profile?.display_name || user.email?.split("@")[0] || "Host",
+          "This run has been cancelled by the host."
+        );
+      } catch {}
+    } catch (err) {
+      console.error("Failed to cancel run:", err);
+      window.alert("Couldn't cancel this run. Check your connection and try again.");
+    }
+  }
+
   return (
     <div className="px-5 py-5 max-w-[430px] mx-auto pb-28">
       <Link href="/runs" className="text-[12.5px] text-muted">
@@ -76,6 +102,36 @@ function RunDetail() {
 
       <h1 className="font-display font-bold text-[22px] leading-tight mt-3">{run.location}</h1>
       <div className="text-[13.5px] text-muted mt-1">{run.when}</div>
+
+      {run.cancelled && (
+        <div className="mt-4 rounded-xl border border-accent-warm/40 bg-accent-warm/10 text-accent-warm text-[13px] font-semibold px-3.5 py-2.5">
+          This run was cancelled by the host.
+        </div>
+      )}
+      {!run.cancelled && run.isPast && (
+        <div className="mt-4 rounded-xl border border-line bg-bg-elevated text-muted text-[13px] px-3.5 py-2.5">
+          This run has finished.
+        </div>
+      )}
+
+      {isHost && !run.cancelled && (
+        <div className="mt-4 flex gap-2.5">
+          <Link
+            href={`/runs/${run.id}/edit`}
+            className="flex-1 text-center bg-bg-elevated border border-line text-text font-display font-semibold text-[13.5px] rounded-xl py-2.5"
+          >
+            Edit run
+          </Link>
+          {!run.isPast && (
+            <button
+              onClick={handleCancel}
+              className="flex-1 bg-bg-elevated border border-accent-warm/40 text-accent-warm font-display font-semibold text-[13.5px] rounded-xl py-2.5"
+            >
+              Cancel run
+            </button>
+          )}
+        </div>
+      )}
 
       <a
         href={mapsUrl(run.location)}

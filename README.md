@@ -90,3 +90,11 @@ group chat limited to the host and the people who joined.
 Chat needs one extra table. In the Supabase SQL Editor, run
 `supabase/0003_run_chat.sql` once, after `schema.sql` and
 `0002_auth_and_joins.sql`.
+
+## Run dates, editing and cancelling
+
+Runs now have a real start date and time (`starts_at`), shown in Nairobi time.
+Finished and cancelled runs are hidden from Discover and moved to "Past &
+cancelled" under My runs. Hosts can edit or cancel their own runs from the
+run's page. In the Supabase SQL Editor, run `supabase/0004_run_dates_and_cancel.sql`
+once, after `0003_run_chat.sql`.

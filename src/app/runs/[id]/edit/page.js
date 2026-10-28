@@ -50,8 +50,10 @@ function EditRun() {
       <p className="text-muted text-[13.5px] mb-6">Changes show for everyone who joined.</p>
       <RunForm
         initial={{
+          city: run.city,
+          tz: run.tz,
           location: run.location,
-          startsAt: run.startsAt ? toInputValue(run.startsAt) : "",
+          startsAt: run.startsAt ? toInputValue(run.startsAt, run.tz) : "",
           distanceKm: String(run.distanceKm),
           pace: formatPace(run.paceMinSec),
           surface: run.surface,

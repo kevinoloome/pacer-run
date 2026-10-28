@@ -1,24 +1,31 @@
-// Run dates. Pacer is Nairobi-based, and Nairobi has no daylight saving
-// (always UTC+03:00), so every date is read and shown in Africa/Nairobi time
-// no matter what time zone the viewer's phone is set to.
+// Run dates. Every run has its own time zone (the one of the city it's in),
+// and its date and time are entered and shown in that zone, no matter where
+// the viewer's phone is. Runs from before cities existed default to Nairobi.
 
-const TZ = "Africa/Nairobi";
+import { DEFAULT_TZ } from "./cities";
+
 const RUN_LENGTH_MS = 3 * 60 * 60 * 1000; // a run counts as over 3 hours after it starts
 
-function dayKey(date) {
-  return date.toLocaleDateString("en-CA", { timeZone: TZ }); // YYYY-MM-DD
+function dayKey(date, tz) {
+  return date.toLocaleDateString("en-CA", { timeZone: tz }); // YYYY-MM-DD
 }
 
-// "Today, 6:00 AM", "Tomorrow, 6:30 AM", "Sat 1 Nov, 6:30 AM"
-export function formatWhen(iso) {
+// How far ahead of UTC a time zone is at a given moment, in ms.
+function offsetMs(tz, utcMs) {
+  const wall = new Date(utcMs).toLocaleString("sv-SE", { timeZone: tz }); // "YYYY-MM-DD HH:MM:SS"
+  return Date.parse(wall.replace(" ", "T") + "Z") - utcMs;
+}
+
+// "Today, 6:00 AM", "Tomorrow, 6:30 AM", "Sat 1 Nov, 6:30 AM" (in the run's zone)
+export function formatWhen(iso, tz = DEFAULT_TZ) {
   const d = new Date(iso);
   if (Number.isNaN(d.getTime())) return "";
-  const time = d.toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit", timeZone: TZ });
+  const time = d.toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit", timeZone: tz });
   const now = new Date();
   let day;
-  if (dayKey(d) === dayKey(now)) day = "Today";
-  else if (dayKey(d) === dayKey(new Date(now.getTime() + 24 * 60 * 60 * 1000))) day = "Tomorrow";
-  else day = d.toLocaleDateString("en-GB", { weekday: "short", day: "numeric", month: "short", timeZone: TZ });
+  if (dayKey(d, tz) === dayKey(now, tz)) day = "Today";
+  else if (dayKey(d, tz) === dayKey(new Date(now.getTime() + 24 * 60 * 60 * 1000), tz)) day = "Tomorrow";
+  else day = d.toLocaleDateString("en-GB", { weekday: "short", day: "numeric", month: "short", timeZone: tz });
   return `${day}, ${time}`;
 }
 
@@ -29,22 +36,25 @@ export function isPastRun(startsAt) {
   return new Date(startsAt).getTime() + RUN_LENGTH_MS < Date.now();
 }
 
-// ISO timestamp -> value for <input type="datetime-local"> (Nairobi time).
-export function toInputValue(iso) {
+// ISO timestamp -> value for <input type="datetime-local"> (time in `tz`).
+export function toInputValue(iso, tz = DEFAULT_TZ) {
   const d = new Date(iso);
   if (Number.isNaN(d.getTime())) return "";
-  return d.toLocaleString("sv-SE", { timeZone: TZ }).replace(" ", "T").slice(0, 16);
+  return d.toLocaleString("sv-SE", { timeZone: tz }).replace(" ", "T").slice(0, 16);
 }
 
-// Value from <input type="datetime-local"> (read as Nairobi time) -> ISO timestamp.
-export function fromInputValue(value) {
+// Value from <input type="datetime-local"> (read as time in `tz`) -> ISO timestamp.
+export function fromInputValue(value, tz = DEFAULT_TZ) {
   if (!value) return null;
-  const d = new Date(`${value}:00+03:00`);
-  return Number.isNaN(d.getTime()) ? null : d.toISOString();
+  const guess = Date.parse(`${value}:00Z`);
+  if (Number.isNaN(guess)) return null;
+  let t = guess - offsetMs(tz, guess);
+  t = guess - offsetMs(tz, t); // second pass settles daylight-saving edges
+  return new Date(t).toISOString();
 }
 
-// 'weekday' | 'weekend' for a start time, in Nairobi time.
-export function dayCatOf(iso) {
-  const wd = new Date(iso).toLocaleDateString("en-US", { weekday: "short", timeZone: TZ });
+// 'weekday' | 'weekend' for a start time, in `tz`.
+export function dayCatOf(iso, tz = DEFAULT_TZ) {
+  const wd = new Date(iso).toLocaleDateString("en-US", { weekday: "short", timeZone: tz });
   return wd === "Sat" || wd === "Sun" ? "weekend" : "weekday";
 }

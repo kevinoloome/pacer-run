@@ -98,3 +98,15 @@ Finished and cancelled runs are hidden from Discover and moved to "Past &
 cancelled" under My runs. Hosts can edit or cancel their own runs from the
 run's page. In the Supabase SQL Editor, run `supabase/0004_run_dates_and_cancel.sql`
 once, after `0003_run_chat.sql`.
+
+## Worldwide runs (migration 0005)
+
+Run `supabase/0005_worldwide.sql` in the Supabase SQL Editor. It adds `city` and `tz`
+(time zone) to runs and marks existing runs as Nairobi. Run times are shown in the run's
+own city time.
+
+## Guest accounts (no sign-up needed)
+
+Visitors are given a guest account automatically the first time they join, post or open
+My runs. In Supabase, turn on **Authentication -> Sign In / Providers -> Allow anonymous
+sign-ins**. Guests can save their account (email + password) from the Profile page.

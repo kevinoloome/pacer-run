@@ -9,9 +9,65 @@ import { fetchMyProfile, updateMyProfile } from "@/lib/runs";
 import { formatPace, parsePace } from "@/lib/pace";
 import { supabase } from "@/lib/supabaseClient";
 
+// Turns a guest account into a normal one (email + password) so the runs
+// and chats can be reached again from another phone or after clearing the browser.
+function SaveAccount() {
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [msg, setMsg] = useState("");
+  const [err, setErr] = useState("");
+  const [busy, setBusy] = useState(false);
+
+  async function save(e) {
+    e.preventDefault();
+    setErr("");
+    setMsg("");
+    if (!email.trim() || password.length < 6) {
+      setErr("Enter an email and a password of at least 6 characters.");
+      return;
+    }
+    setBusy(true);
+    const { data, error } = await supabase.auth.updateUser({ email: email.trim(), password });
+    setBusy(false);
+    if (error) {
+      setErr(error.message);
+      return;
+    }
+    setMsg(
+      data.user?.email === email.trim().toLowerCase()
+        ? "Saved. You can now sign in from any phone."
+        : "Check your email to confirm, then your account is saved."
+    );
+  }
+
+  return (
+    <form
+      onSubmit={save}
+      className="mb-7 rounded-2xl border border-accent/30 bg-accent/5 p-4"
+    >
+      <div className="font-display font-bold text-[15px] mb-1">Save your account</div>
+      <p className="text-muted text-[12.5px] mb-3.5">
+        You&apos;re on a guest account. Add an email and password to keep your runs if you switch
+        phones or clear your browser.
+      </p>
+      <AuthInput label="Email" type="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="you@example.com" />
+      <AuthInput label="Password" type="password" value={password} onChange={(e) => setPassword(e.target.value)} placeholder="At least 6 characters" />
+      {err && <p className="text-accent-warm text-[12.5px] mb-2">{err}</p>}
+      {msg && <p className="text-accent text-[12.5px] mb-2">{msg}</p>}
+      <button
+        type="submit"
+        disabled={busy}
+        className="w-full bg-accent text-bg font-display font-bold text-[14px] rounded-xl py-3 disabled:opacity-60"
+      >
+        {busy ? "Saving..." : "Save account"}
+      </button>
+    </form>
+  );
+}
+
 function ProfileForm() {
   const router = useRouter();
-  const { user } = useAuth();
+  const { user, isGuest } = useAuth();
   const [displayName, setDisplayName] = useState("");
   const [paceMin, setPaceMin] = useState("");
   const [paceMax, setPaceMax] = useState("");
@@ -68,7 +124,14 @@ function ProfileForm() {
   }
 
   async function handleSignOut() {
-    if (!window.confirm("Sign out of Pacer?")) return;
+    if (
+      !window.confirm(
+        isGuest
+          ? "You're using a guest account. If you sign out, you can't get back to your runs unless you save your account first. Sign out anyway?"
+          : "Sign out of Pacer?"
+      )
+    )
+      return;
     await supabase.auth.signOut();
     router.replace("/");
   }
@@ -82,7 +145,9 @@ function ProfileForm() {
   return (
     <div className="px-5 py-6 max-w-[430px] mx-auto pb-28">
       <h1 className="font-display font-bold text-2xl mb-1.5">Your profile</h1>
-      <p className="text-muted text-[13.5px] mb-6">{user.email}</p>
+      <p className="text-muted text-[13.5px] mb-6">{isGuest ? "Guest account" : user.email}</p>
+
+      {isGuest && <SaveAccount />}
 
       <form onSubmit={handleSave}>
         <AuthInput

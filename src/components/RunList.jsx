@@ -7,8 +7,9 @@ import { matchBadge } from "@/lib/pace";
 import { fetchRuns, joinRun, leaveRun, fetchMyProfile, updateMyProfile, JOIN_RESULT } from "@/lib/runs";
 import { defaultPaceRange } from "@/lib/mockData";
 import SwipeDeck from "./SwipeDeck";
-import { useAuth } from "@/lib/AuthProvider";
+import { useAuth, ensureSession } from "@/lib/AuthProvider";
 import { getLocalPace, PACE_CHANGED_EVENT } from "@/lib/localPace";
+import { getHomeCity } from "@/lib/cities";
 
 const SURFACE_ICON = { trail: "🌲", road: "🏙️", track: "🏟️" };
 const SURFACE_GRADIENT = {
@@ -47,10 +48,10 @@ export default function RunList() {
   const [status, setStatus] = useState("loading"); // 'loading' | 'ready' | 'error'
   const [paceOnly, setPaceOnly] = useState(false);
   const [dayFilter, setDayFilter] = useState("all");
+  const [cityFilter, setCityFilter] = useState(null); // null = not chosen yet
   const [view, setView] = useState("swipe"); // 'swipe' | 'list'
   const [busyId, setBusyId] = useState(null);
   const [toast, setToast] = useState("");
-  const [authPrompt, setAuthPrompt] = useState(false);
 
   useEffect(() => {
     if (authLoading) return;
@@ -109,13 +110,22 @@ export default function RunList() {
 
   // Resolves to true only when the person is now in the run.
   async function handleJoin(run) {
-    if (!user) {
-      setAuthPrompt(true);
-      return false;
+    // No account yet? Quietly create a guest one so joining is one tap.
+    let uid = user?.id;
+    const createdGuest = !uid;
+    if (!uid) {
+      try {
+        uid = (await ensureSession()).user.id;
+      } catch (err) {
+        console.error("Couldn't start a guest session:", err);
+        showToast("Please sign up to join this run.");
+        router.push("/sign-up");
+        return false;
+      }
     }
     setBusyId(run.id);
     try {
-      const result = await joinRun(run, user.id);
+      const result = await joinRun(run, uid);
       if (result === JOIN_RESULT.FULL) {
         showToast("This run is full.");
         return false;
@@ -136,6 +146,8 @@ export default function RunList() {
         )
       );
       showToast("You're in! Find it under My runs.");
+      // The first join also creates the guest account: reload so "You're in" sticks.
+      if (createdGuest) fetchRuns(uid).then(setRuns).catch(() => {});
       return true;
     } catch (err) {
       console.error("Failed to join run:", err);
@@ -178,7 +190,16 @@ export default function RunList() {
       return 0;
     });
 
+  // Cities that currently have open runs, busiest first.
+  const cityCounts = new Map();
+  for (const r of open) cityCounts.set(r.city, (cityCounts.get(r.city) ?? 0) + 1);
+  const cities = [...cityCounts.entries()].sort((a, b) => b[1] - a[1]).map(([c]) => c);
+  // Until the person picks one, show their saved home city if it has runs, else everywhere.
+  const home = typeof window !== "undefined" ? getHomeCity() : "";
+  const activeCity = cityFilter ?? (cities.includes(home) ? home : "all");
+
   const visible = open.filter((r) => {
+    if (activeCity !== "all" && r.city !== activeCity) return false;
     if (paceOnly && matchBadge(r.paceMinSec, paceRange).cls !== "great") return false;
     if (dayFilter !== "all" && r.dayCat !== dayFilter) return false;
     return true;
@@ -189,41 +210,6 @@ export default function RunList() {
       {toast && (
         <div className="fixed top-4 left-1/2 -translate-x-1/2 z-50 bg-bg-elevated border border-line text-text text-[12.5px] px-4 py-2.5 rounded-xl shadow-lg">
           {toast}
-        </div>
-      )}
-
-      {authPrompt && (
-        <div
-          className="fixed inset-0 z-[60] bg-black/60 flex items-end justify-center"
-          onClick={() => setAuthPrompt(false)}
-        >
-          <div
-            className="w-full max-w-[430px] bg-bg-elevated border-t border-line rounded-t-3xl px-6 pt-6 pb-8"
-            onClick={(e) => e.stopPropagation()}
-          >
-            <h3 className="font-display font-bold text-[19px] mb-1.5">Create a free account to join</h3>
-            <p className="text-muted text-[13px] mb-5">
-              It takes under a minute. You can keep browsing without one.
-            </p>
-            <button
-              onClick={() => router.push("/sign-up")}
-              className="w-full bg-accent text-bg font-display font-bold text-[15px] rounded-2xl py-3.5 mb-2.5"
-            >
-              Create account
-            </button>
-            <button
-              onClick={() => router.push("/sign-in")}
-              className="w-full bg-bg border border-line text-text font-display font-semibold text-[14px] rounded-2xl py-3 mb-2"
-            >
-              I already have an account
-            </button>
-            <button
-              onClick={() => setAuthPrompt(false)}
-              className="w-full text-center text-[12.5px] text-muted py-1"
-            >
-              Not now
-            </button>
-          </div>
         </div>
       )}
 
@@ -268,6 +254,24 @@ export default function RunList() {
               + Post a run
             </Link>
           </div>
+
+          {cities.length > 1 && (
+            <div className="flex items-center gap-2 mb-2 overflow-x-auto pb-1 -mx-1 px-1">
+              {["all", ...cities].map((c) => (
+                <button
+                  key={c}
+                  onClick={() => setCityFilter(c)}
+                  className={`shrink-0 rounded-full border px-3.5 py-1.5 text-[12px] font-medium ${
+                    activeCity === c
+                      ? "bg-accent/15 border-accent text-accent"
+                      : "bg-bg-elevated border-line text-muted"
+                  }`}
+                >
+                  {c === "all" ? "🌍 All places" : c}
+                </button>
+              ))}
+            </div>
+          )}
 
           <div className="flex items-center gap-2 mb-4 overflow-x-auto pb-1 -mx-1 px-1">
             <button
@@ -383,7 +387,7 @@ function RunItem({ run, paceRange, isMine, busy, onJoin, onLeave }) {
             {run.location}
           </div>
           <div className="flex items-center justify-between gap-2 text-[12.5px] text-[#D8DCE1] mt-0.5">
-            <span>{run.when}</span>
+            <span className="truncate">{run.when} &middot; {run.city}</span>
             {run.weather?.icon && (
               <span className="flex items-center gap-1">
                 <span>{run.weather.icon}</span>

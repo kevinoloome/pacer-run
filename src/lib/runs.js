@@ -19,7 +19,9 @@ function mapRun(row, myJoinedRunIds) {
   return {
     id: row.id,
     location: row.location,
-    when: row.starts_at ? formatWhen(row.starts_at) : row.when_text,
+    city: row.city ?? "Nairobi, Kenya",
+    tz: row.tz ?? "Africa/Nairobi",
+    when: row.starts_at ? formatWhen(row.starts_at, row.tz ?? "Africa/Nairobi") : row.when_text,
     startsAt: row.starts_at ?? null,
     cancelled: !!row.cancelled_at,
     isPast: isPastRun(row.starts_at),
@@ -122,7 +124,9 @@ export async function postRun(input, userId, hostName) {
     .from("runs")
     .insert({
       location: input.location,
-      when_text: formatWhen(input.startsAt),
+      city: input.city,
+      tz: input.tz,
+      when_text: formatWhen(input.startsAt, input.tz),
       starts_at: input.startsAt,
       distance_km: input.distanceKm,
       surface: input.surface,
@@ -232,7 +236,9 @@ export async function updateRun(runId, userId, input) {
     .from("runs")
     .update({
       location: input.location,
-      when_text: formatWhen(input.startsAt),
+      city: input.city,
+      tz: input.tz,
+      when_text: formatWhen(input.startsAt, input.tz),
       starts_at: input.startsAt,
       distance_km: input.distanceKm,
       surface: input.surface,

@@ -3,7 +3,29 @@
 import { createContext, useContext, useEffect, useState } from "react";
 import { supabase } from "./supabaseClient";
 
-const AuthContext = createContext({ session: null, loading: true, user: null });
+const AuthContext = createContext({ session: null, loading: true, user: null, isGuest: false });
+
+// Gives a visitor a guest (anonymous) account so they can join, post and chat
+// without filling in any form. Returns the existing session if there is one.
+// Needs "Allow anonymous sign-ins" turned on in Supabase (Authentication).
+let guestPromise = null;
+export async function ensureSession() {
+  const { data } = await supabase.auth.getSession();
+  if (data.session) return data.session;
+  if (!guestPromise) {
+    const name = `Runner ${100 + Math.floor(Math.random() * 900)}`;
+    guestPromise = supabase.auth
+      .signInAnonymously({ options: { data: { display_name: name } } })
+      .then(({ data: d, error }) => {
+        if (error) throw error;
+        return d.session;
+      })
+      .finally(() => {
+        guestPromise = null;
+      });
+  }
+  return guestPromise;
+}
 
 // Tracks the signed-in Supabase session for the whole app (browser session,
 // persisted to localStorage by supabase-js itself, same idea as the native
@@ -35,7 +57,12 @@ export function AuthProvider({ children }) {
   }, []);
 
   return (
-    <AuthContext.Provider value={{ session, loading, user: session?.user ?? null }}>
+    <AuthContext.Provider value={{
+        session,
+        loading,
+        user: session?.user ?? null,
+        isGuest: !!session?.user?.is_anonymous,
+      }}>
       {children}
     </AuthContext.Provider>
   );

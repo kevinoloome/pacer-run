@@ -1,8 +1,6 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { useRouter } from "next/navigation";
-import { useAuth } from "@/lib/AuthProvider";
 import { parsePace } from "@/lib/pace";
 import { hasOnboarded, markOnboarded, setLocalPace } from "@/lib/localPace";
 
@@ -18,8 +16,6 @@ const TOTAL_STEPS = 4;
 // First-visit intro, ported from the prototype: welcome, how it works,
 // pace, safety. Shown once per browser (remembered in localStorage).
 export default function Onboarding() {
-  const router = useRouter();
-  const { session } = useAuth();
   const [open, setOpen] = useState(false);
   const [step, setStep] = useState(1);
   const [paceMin, setPaceMin] = useState("5:15");
@@ -34,7 +30,7 @@ export default function Onboarding() {
 
   if (!open) return null;
 
-  function finish(savePace, goToSignUp = false) {
+  function finish(savePace) {
     if (savePace) {
       const min = parsePace(paceMin);
       const max = parsePace(paceMax);
@@ -42,7 +38,6 @@ export default function Onboarding() {
     }
     markOnboarded();
     setOpen(false);
-    if (goToSignUp) router.push("/sign-up");
   }
 
   function nextFromPace() {
@@ -104,7 +99,7 @@ export default function Onboarding() {
                   Tap <b className="text-text">Post</b> to host your own run and invite others.
                 </Point>
                 <Point icon="👤">
-                  You can browse without an account. You only need one to join or post.
+                  No sign-up needed. Just swipe, join and chat.
                 </Point>
               </ul>
             </>
@@ -176,19 +171,7 @@ export default function Onboarding() {
           {step === 1 && <Primary onClick={() => setStep(2)}>Get started</Primary>}
           {step === 2 && <Primary onClick={() => setStep(3)}>Continue</Primary>}
           {step === 3 && <Primary onClick={nextFromPace}>Continue</Primary>}
-          {step === 4 && !session && (
-            <>
-              <Primary onClick={() => finish(true, true)}>Create free account</Primary>
-              <button
-                type="button"
-                onClick={() => finish(true)}
-                className="w-full bg-bg-elevated border border-line text-text font-display font-semibold text-[14px] rounded-2xl py-3"
-              >
-                Just browse runs
-              </button>
-            </>
-          )}
-          {step === 4 && session && <Primary onClick={() => finish(true)}>Start browsing runs</Primary>}
+          {step === 4 && <Primary onClick={() => finish(true)}>Start browsing runs</Primary>}
           {step < 4 && (
             <button
               type="button"

@@ -223,7 +223,7 @@ function DeckCard({ run, paceRange, style, handlers, dimmed, interactive }) {
             {run.location}
           </div>
           <div className="flex items-center justify-between gap-2 text-[12.5px] text-[#D8DCE1] mt-0.5">
-            <span>{run.when}</span>
+            <span className="truncate">{run.when} &middot; {run.city}</span>
             {run.weather?.icon && (
               <span className="flex items-center gap-1">
                 <span>{run.weather.icon}</span>

@@ -10,8 +10,8 @@ import { fetchMessages, sendMessage, subscribeToMessages } from "@/lib/chat";
 
 const POLL_MS = 8000;
 
-function mapsUrl(location) {
-  const query = encodeURIComponent(`${location}, Nairobi`);
+function mapsUrl(location, city) {
+  const query = encodeURIComponent(`${location}, ${city}`);
   return `https://www.google.com/maps/search/?api=1&query=${query}`;
 }
 
@@ -101,7 +101,9 @@ function RunDetail() {
       </Link>
 
       <h1 className="font-display font-bold text-[22px] leading-tight mt-3">{run.location}</h1>
-      <div className="text-[13.5px] text-muted mt-1">{run.when}</div>
+      <div className="text-[13.5px] text-muted mt-1">
+        {run.when} &middot; {run.city}
+      </div>
 
       {run.cancelled && (
         <div className="mt-4 rounded-xl border border-accent-warm/40 bg-accent-warm/10 text-accent-warm text-[13px] font-semibold px-3.5 py-2.5">
@@ -134,7 +136,7 @@ function RunDetail() {
       )}
 
       <a
-        href={mapsUrl(run.location)}
+        href={mapsUrl(run.location, run.city)}
         target="_blank"
         rel="noopener noreferrer"
         className="mt-4 flex items-center justify-center gap-2 w-full bg-accent text-bg font-display font-bold text-[14.5px] rounded-2xl py-3"

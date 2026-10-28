@@ -4,6 +4,7 @@ import { useState } from "react";
 import AuthInput from "@/components/AuthInput";
 import { parsePace } from "@/lib/pace";
 import { dayCatOf, fromInputValue, toInputValue } from "@/lib/when";
+import { CITIES, getHomeCity, setHomeCity, tzForCity } from "@/lib/cities";
 
 const SURFACES = [
   { value: "trail", label: "Trail" },
@@ -15,6 +16,7 @@ const SURFACES = [
 // editing; `minCapacity` stops a host lowering the capacity below the number
 // of runners already in. `onSubmit(input)` should throw on failure.
 export default function RunForm({ initial = {}, minCapacity = 1, submitLabel, busyLabel, onSubmit }) {
+  const [city, setCity] = useState(initial.city ?? getHomeCity());
   const [location, setLocation] = useState(initial.location ?? "");
   const [startsAt, setStartsAt] = useState(initial.startsAt ?? "");
   const [distanceKm, setDistanceKm] = useState(initial.distanceKm ?? "");
@@ -25,17 +27,23 @@ export default function RunForm({ initial = {}, minCapacity = 1, submitLabel, bu
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
 
-  const nowValue = toInputValue(new Date().toISOString());
+  // Editing keeps the run's own zone; a new run uses the city's zone.
+  const tz = initial.tz && city === initial.city ? initial.tz : tzForCity(city);
+  const nowValue = toInputValue(new Date().toISOString(), tz);
 
   async function handleSubmit(e) {
     e.preventDefault();
     setError("");
 
+    if (!city.trim()) {
+      setError("Enter the city the run is in, e.g. Nairobi, Kenya.");
+      return;
+    }
     if (!location.trim()) {
       setError("Enter where the run starts.");
       return;
     }
-    const startsAtIso = fromInputValue(startsAt);
+    const startsAtIso = fromInputValue(startsAt, tz);
     if (!startsAtIso) {
       setError("Pick the date and time the run starts.");
       return;
@@ -66,12 +74,15 @@ export default function RunForm({ initial = {}, minCapacity = 1, submitLabel, bu
 
     setLoading(true);
     try {
+      setHomeCity(city.trim());
       await onSubmit({
+        city: city.trim(),
+        tz,
         location: location.trim(),
         startsAt: startsAtIso,
         distanceKm: distance,
         surface,
-        dayCat: dayCatOf(startsAtIso),
+        dayCat: dayCatOf(startsAtIso, tz),
         paceSec,
         capacity: cap,
         note: note.trim(),
@@ -85,15 +96,32 @@ export default function RunForm({ initial = {}, minCapacity = 1, submitLabel, bu
 
   return (
     <form noValidate onSubmit={handleSubmit}>
+      <label className="block mb-3.5">
+        <div className="text-[12px] font-medium text-muted mb-1.5">City</div>
+        <input
+          list="pacer-cities"
+          value={city}
+          onChange={(e) => setCity(e.target.value)}
+          placeholder="Nairobi, Kenya"
+          className="w-full bg-bg-elevated border border-line rounded-xl px-3.5 py-3 text-[14px] text-text placeholder:text-muted focus:outline-none focus:border-accent"
+        />
+        <datalist id="pacer-cities">
+          {CITIES.map((c) => (
+            <option key={c.name} value={c.name} />
+          ))}
+        </datalist>
+        <div className="text-[11px] text-muted mt-1">Pick one or type your own, e.g. Lusaka, Zambia.</div>
+      </label>
+
       <AuthInput
-        label="Location"
+        label="Meeting place"
         value={location}
         onChange={(e) => setLocation(e.target.value)}
         placeholder="Karura Forest, Limuru Rd gate"
       />
 
       <label className="block mb-3.5">
-        <div className="text-[12px] font-medium text-muted mb-1.5">Date and time (Nairobi time)</div>
+        <div className="text-[12px] font-medium text-muted mb-1.5">Date and time (local time in the city)</div>
         <input
           type="datetime-local"
           value={startsAt}

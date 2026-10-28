@@ -4,16 +4,11 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useAuth } from "@/lib/AuthProvider";
 
-const TABS_SIGNED_IN = [
+const TABS = [
   { href: "/", label: "Discover", icon: "🧭" },
   { href: "/runs", label: "My runs", icon: "🏃" },
   { href: "/post", label: "Post", icon: "➕" },
   { href: "/profile", label: "Profile", icon: "👤" },
-];
-
-const TABS_SIGNED_OUT = [
-  { href: "/", label: "Discover", icon: "🧭" },
-  { href: "/sign-up", label: "Sign up", icon: "👤", alsoActive: ["/sign-in"] },
 ];
 
 // Fixed bottom tab bar, the web equivalent of pacer-native's tab navigator.
@@ -21,8 +16,8 @@ const TABS_SIGNED_OUT = [
 // only show once signed in, Sign in shows instead when signed out.
 export default function BottomNav() {
   const pathname = usePathname();
-  const { session, loading } = useAuth();
-  const tabs = session ? TABS_SIGNED_IN : TABS_SIGNED_OUT;
+  const { loading } = useAuth();
+  const tabs = TABS;
 
   if (loading) return null;
 

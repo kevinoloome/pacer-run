@@ -14,15 +14,16 @@ function PostRun() {
   const [posted, setPosted] = useState(false);
   const [formKey, setFormKey] = useState(0);
   const [name, setName] = useState("");
-  const [needsName, setNeedsName] = useState(false);
+  const [currentName, setCurrentName] = useState("");
 
-  // Guest accounts start as "Runner 123": ask for a real name once.
+  // Fill the name box with the name already on the profile.
   useEffect(() => {
     fetchMyProfile(user.id)
       .then((p) => {
         const current = p?.display_name || "";
-        if (!current || /^Runner \d+$/.test(current)) setNeedsName(true);
-        else setName(current);
+        setCurrentName(current);
+        // Guests start as "Runner 123": leave the box empty for them.
+        if (current && !/^Runner \d+$/.test(current)) setName(current);
       })
       .catch(() => {});
   }, [user.id]);
@@ -30,9 +31,9 @@ function PostRun() {
   async function handleSubmit(input) {
     let hostName = name.trim();
     const profile = await fetchMyProfile(user.id);
-    if (needsName && hostName) {
-      // A name was typed: save it to the profile so it sticks for next time.
-      await updateMyProfile(user.id, { display_name: hostName });
+    if (hostName) {
+      // A name is in the box: use it, and save it so it sticks for next time.
+      if (hostName !== currentName) await updateMyProfile(user.id, { display_name: hostName });
     } else {
       // Blank: post under the existing name (guests get "Runner 482" automatically).
       hostName = profile?.display_name || user.email || "Runner";
@@ -73,9 +74,9 @@ function PostRun() {
     <div className="px-5 py-6 max-w-[430px] mx-auto pb-28">
       <h1 className="font-display font-bold text-2xl mb-1.5">Post a run</h1>
       <p className="text-muted text-[13.5px] mb-6">Invite your running family to join you.</p>
-      {needsName && (
+      {(
         <AuthInput
-          label="Your name (optional, runners will see this)"
+          label="Your name (runners will see this)"
           value={name}
           onChange={(e) => setName(e.target.value)}
           placeholder="Leave blank to post as a random Runner name"

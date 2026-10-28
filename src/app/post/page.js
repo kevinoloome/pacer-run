@@ -29,11 +29,12 @@ function PostRun() {
 
   async function handleSubmit(input) {
     let hostName = name.trim();
-    if (needsName) {
-      if (!hostName) throw new Error("Enter your name so runners know who is hosting.");
+    const profile = await fetchMyProfile(user.id);
+    if (needsName && hostName) {
+      // A name was typed: save it to the profile so it sticks for next time.
       await updateMyProfile(user.id, { display_name: hostName });
     } else {
-      const profile = await fetchMyProfile(user.id);
+      // Blank: post under the existing name (guests get "Runner 482" automatically).
       hostName = profile?.display_name || user.email || "Runner";
     }
     await postRun(input, user.id, hostName);
@@ -74,10 +75,10 @@ function PostRun() {
       <p className="text-muted text-[13.5px] mb-6">Invite your running family to join you.</p>
       {needsName && (
         <AuthInput
-          label="Your name (runners will see this)"
+          label="Your name (optional, runners will see this)"
           value={name}
           onChange={(e) => setName(e.target.value)}
-          placeholder="Jane"
+          placeholder="Leave blank to post as a random Runner name"
         />
       )}
       <RunForm

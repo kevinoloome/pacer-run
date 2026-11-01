@@ -8,6 +8,8 @@ import { useAuth } from "@/lib/AuthProvider";
 import { fetchMyProfile, updateMyProfile } from "@/lib/runs";
 import { formatPace, parsePace } from "@/lib/pace";
 import { supabase } from "@/lib/supabaseClient";
+import Link from "next/link";
+import { fetchBlockedPeople, unblockUser } from "@/lib/safety";
 
 // Turns a guest account into a normal one (email + password) so the runs
 // and chats can be reached again from another phone or after clearing the browser.
@@ -62,6 +64,37 @@ function SaveAccount() {
         {busy ? "Saving..." : "Save account"}
       </button>
     </form>
+  );
+}
+
+function BlockedList({ userId }) {
+  const [people, setPeople] = useState([]);
+  useEffect(() => {
+    let cancelled = false;
+    fetchBlockedPeople(userId).then((p) => !cancelled && setPeople(p));
+    return () => {
+      cancelled = true;
+    };
+  }, [userId]);
+  if (people.length === 0) return null;
+  return (
+    <div className="mt-6 rounded-2xl border border-line bg-bg-elevated p-4">
+      <div className="font-display font-bold text-[14px] mb-2.5">Blocked people</div>
+      {people.map((p) => (
+        <div key={p.id} className="flex items-center justify-between py-1.5 text-[13px]">
+          <span>{p.name}</span>
+          <button
+            onClick={async () => {
+              await unblockUser(userId, p.id);
+              setPeople((list) => list.filter((x) => x.id !== p.id));
+            }}
+            className="text-accent text-[12.5px] font-semibold"
+          >
+            Unblock
+          </button>
+        </div>
+      ))}
+    </div>
   );
 }
 
@@ -184,9 +217,18 @@ function ProfileForm() {
         </button>
       </form>
 
+      <BlockedList userId={user.id} />
+
+      <Link
+        href="/feedback"
+        className="block text-center w-full bg-bg-elevated border border-line text-text font-display font-semibold text-[14px] rounded-2xl py-3.5 mt-6"
+      >
+        Send feedback
+      </Link>
+
       <button
         onClick={handleSignOut}
-        className="w-full bg-bg-elevated border border-line text-accent-warm font-display font-semibold text-[14px] rounded-2xl py-3.5 mt-6"
+        className="w-full bg-bg-elevated border border-line text-accent-warm font-display font-semibold text-[14px] rounded-2xl py-3.5 mt-3"
       >
         Sign out
       </button>

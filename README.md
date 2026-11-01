@@ -110,3 +110,9 @@ own city time.
 Visitors are given a guest account automatically the first time they join, post or open
 My runs. In Supabase, turn on **Authentication -> Sign In / Providers -> Allow anonymous
 sign-ins**. Guests can save their account (email + password) from the Profile page.
+
+## Feedback, reports and blocking (migration 0006)
+
+Run `supabase/0006_feedback_reports_blocks.sql` in the Supabase SQL Editor. People can send
+feedback from the Profile page (and a link under the run list), report a run, and block a
+host. Read feedback and reports in Supabase: Table Editor -> `feedback` / `reports`.

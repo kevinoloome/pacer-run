@@ -10,6 +10,7 @@ import SwipeDeck from "./SwipeDeck";
 import { useAuth, ensureSession } from "@/lib/AuthProvider";
 import { getLocalPace, PACE_CHANGED_EVENT } from "@/lib/localPace";
 import { getHomeCity } from "@/lib/cities";
+import { fetchBlockedIds } from "@/lib/safety";
 
 const SURFACE_ICON = { trail: "🌲", road: "🏙️", track: "🏟️" };
 const SURFACE_GRADIENT = {
@@ -49,6 +50,7 @@ export default function RunList() {
   const [paceOnly, setPaceOnly] = useState(false);
   const [dayFilter, setDayFilter] = useState("all");
   const [cityFilter, setCityFilter] = useState(null); // null = not chosen yet
+  const [blockedIds, setBlockedIds] = useState(new Set());
   const [view, setView] = useState("swipe"); // 'swipe' | 'list'
   const [busyId, setBusyId] = useState(null);
   const [toast, setToast] = useState("");
@@ -62,6 +64,11 @@ export default function RunList() {
         const list = await fetchRuns(user?.id);
         if (cancelled) return;
         setRuns(list);
+        if (user) {
+          fetchBlockedIds(user.id).then((ids) => {
+            if (!cancelled) setBlockedIds(ids);
+          });
+        }
 
         // Pace priority: saved profile > pace picked in onboarding > default.
         const local = getLocalPace();
@@ -182,7 +189,7 @@ export default function RunList() {
   // Discover shows only runs that are still open, soonest first. Runs with no
   // date (the sample runs) go after the dated ones.
   const open = runs
-    .filter((r) => !r.cancelled && !r.isPast)
+    .filter((r) => !r.cancelled && !r.isPast && !(r.hostId && blockedIds.has(r.hostId)))
     .sort((a, b) => {
       if (a.startsAt && b.startsAt) return new Date(a.startsAt) - new Date(b.startsAt);
       if (a.startsAt) return -1;
@@ -339,6 +346,11 @@ export default function RunList() {
               ))}
             </div>
           )}
+          <div className="text-center mt-8 mb-2">
+            <Link href="/feedback" className="text-[12.5px] text-muted underline">
+              Tell us what you think
+            </Link>
+          </div>
         </>
       )}
     </div>

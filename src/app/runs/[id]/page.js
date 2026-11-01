@@ -7,6 +7,8 @@ import RequireAuth from "@/components/RequireAuth";
 import { useAuth } from "@/lib/AuthProvider";
 import { fetchRun, fetchParticipants, fetchMyProfile, cancelRun } from "@/lib/runs";
 import { fetchMessages, sendMessage, subscribeToMessages } from "@/lib/chat";
+import { useRouter } from "next/navigation";
+import { REPORT_REASONS, reportRun, blockUser, fetchBlockedIds } from "@/lib/safety";
 
 const POLL_MS = 8000;
 
@@ -178,6 +180,8 @@ function RunDetail() {
         Meet at a public, well-lit place, and tell someone you trust where you&apos;re running.
       </div>
 
+      {!isHost && <SafetyMenu run={run} user={user} />}
+
       <div className="mt-6">
         <div className="text-[12px] font-semibold text-muted uppercase tracking-wider mb-2">
           Run chat
@@ -202,7 +206,116 @@ function RunDetail() {
   );
 }
 
+function SafetyMenu({ run, user }) {
+  const router = useRouter();
+  const [open, setOpen] = useState(false);
+  const [reason, setReason] = useState("");
+  const [details, setDetails] = useState("");
+  const [done, setDone] = useState("");
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState("");
+
+  async function submitReport() {
+    if (!reason) {
+      setError("Choose a reason.");
+      return;
+    }
+    setBusy(true);
+    setError("");
+    try {
+      await reportRun({ reporterId: user.id, run, reason, details: details.trim() });
+      setDone("Thanks. We'll look into this run.");
+      setOpen(false);
+    } catch (err) {
+      console.error("Couldn't send report:", err);
+      setError("Couldn't send the report. Try again.");
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  async function handleBlock() {
+    if (
+      !window.confirm(
+        `Block ${run.host}? Their runs and messages will be hidden from you. You can unblock them in your profile.`
+      )
+    )
+      return;
+    try {
+      await blockUser(user.id, run.hostId);
+      router.replace("/");
+    } catch (err) {
+      console.error("Couldn't block:", err);
+      setError("Couldn't block. Try again.");
+    }
+  }
+
+  return (
+    <div className="mt-5">
+      {done && <p className="text-accent text-[12.5px] mb-2">{done}</p>}
+      {!open ? (
+        <button onClick={() => setOpen(true)} className="text-[12.5px] text-muted underline">
+          Report or block
+        </button>
+      ) : (
+        <div className="rounded-2xl border border-line bg-bg-elevated p-4">
+          <div className="font-display font-bold text-[14px] mb-2.5">Report this run</div>
+          <div className="flex flex-wrap gap-2 mb-3">
+            {REPORT_REASONS.map((r) => (
+              <button
+                key={r}
+                type="button"
+                onClick={() => setReason(r)}
+                className={`rounded-full border px-3 py-1.5 text-[12px] ${
+                  reason === r
+                    ? "bg-accent/15 border-accent text-accent"
+                    : "bg-bg border-line text-muted"
+                }`}
+              >
+                {r}
+              </button>
+            ))}
+          </div>
+          <textarea
+            value={details}
+            onChange={(e) => setDetails(e.target.value)}
+            maxLength={1000}
+            rows={3}
+            placeholder="Anything else we should know? (optional)"
+            className="w-full bg-bg border border-line rounded-xl px-3 py-2.5 text-[13px] text-text placeholder:text-muted focus:outline-none focus:border-accent resize-none mb-2.5"
+          />
+          {error && <p className="text-accent-warm text-[12px] mb-2">{error}</p>}
+          <div className="flex gap-2">
+            <button
+              onClick={submitReport}
+              disabled={busy}
+              className="flex-1 bg-accent text-bg font-display font-bold text-[13px] rounded-xl py-2.5 disabled:opacity-60"
+            >
+              {busy ? "Sending..." : "Send report"}
+            </button>
+            <button
+              onClick={() => setOpen(false)}
+              className="px-4 bg-bg border border-line text-muted text-[13px] rounded-xl"
+            >
+              Cancel
+            </button>
+          </div>
+          {run.hostId && (
+            <button
+              onClick={handleBlock}
+              className="mt-3 w-full text-[12.5px] text-accent-warm border border-accent-warm/40 rounded-xl py-2.5"
+            >
+              Block {run.host}
+            </button>
+          )}
+        </div>
+      )}
+    </div>
+  );
+}
+
 function Chat({ runId, user }) {
+  const [blocked, setBlocked] = useState(new Set());
   const [messages, setMessages] = useState([]);
   const [text, setText] = useState("");
   const [sending, setSending] = useState(false);
@@ -220,6 +333,10 @@ function Chat({ runId, user }) {
 
   useEffect(() => {
     let cancelled = false;
+
+    fetchBlockedIds(user.id).then((ids) => {
+      if (!cancelled) setBlocked(ids);
+    });
 
     fetchMessages(runId)
       .then((list) => {
@@ -295,7 +412,7 @@ function Chat({ runId, user }) {
             No messages yet. Say hi and agree where to meet.
           </div>
         )}
-        {messages.map((m) => {
+        {messages.filter((m) => !blocked.has(m.user_id)).map((m) => {
           const mine = m.user_id === user.id;
           return (
             <div key={m.id} className={`flex flex-col ${mine ? "items-end" : "items-start"}`}>

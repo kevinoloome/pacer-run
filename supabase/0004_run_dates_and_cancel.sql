@@ -1,4 +1,4 @@
--- Pacer: real run dates + cancelling a run
+-- TwendeRun: real run dates + cancelling a run
 -- Run this in the Supabase SQL Editor AFTER 0003_run_chat.sql
 -- (Project -> SQL Editor -> New query -> paste -> Run). Safe to run more than once.
 --

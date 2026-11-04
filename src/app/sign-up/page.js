@@ -72,7 +72,7 @@ export default function SignUpPage() {
   return (
     <div className="px-6 py-12 pb-28 max-w-[430px] mx-auto">
       <div className="font-display font-bold text-xl mb-7">
-        pacer<span className="text-accent">.</span>
+        TwendeRun<span className="text-accent">.</span>
       </div>
       <h1 className="font-display font-bold text-2xl mb-1.5">Create your account</h1>
       <p className="text-muted text-[13.5px] mb-6">Find someone to run with.</p>

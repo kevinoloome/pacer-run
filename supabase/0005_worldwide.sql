@@ -1,4 +1,4 @@
--- Pacer: worldwide runs
+-- TwendeRun: worldwide runs
 -- Run this in the Supabase SQL Editor (New query -> paste -> Run). Safe to run once.
 --
 -- 1. Adds `city` and `tz` (time zone) to runs. Every run now has a city, and its

@@ -161,7 +161,7 @@ function ProfileForm() {
       !window.confirm(
         isGuest
           ? "You're using a guest account. If you sign out, you can't get back to your runs unless you save your account first. Sign out anyway?"
-          : "Sign out of Pacer?"
+          : "Sign out of TwendeRun?"
       )
     )
       return;

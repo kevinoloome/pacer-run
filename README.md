@@ -1,12 +1,12 @@
-# Pacer
+# TwendeRun
 
-The real, in-progress build of Pacer, a running-buddy matching app. This replaces the
+The real, in-progress build of TwendeRun, a running-buddy matching app. This replaces the
 static HTML prototype (`pacer-prototype.html`) as the actual codebase going forward.
 
 ## Stack
 
 - **Next.js** (App Router) — framework, routing, deploys straight to Vercel
-- **Tailwind CSS v4** — styling, using Pacer's actual design tokens (see below)
+- **Tailwind CSS v4** — styling, using TwendeRun's actual design tokens (see below)
 - **Supabase** — database, wired up for Discover; auth and realtime chat come next
 - **Mapbox** — location/maps (not wired up yet)
 
@@ -37,7 +37,7 @@ the "Couldn't load runs" error state instead of real data.
 
 ## Design tokens
 
-Pacer's color palette and fonts are defined once, in `src/app/globals.css`, as CSS
+TwendeRun's color palette and fonts are defined once, in `src/app/globals.css`, as CSS
 custom properties wired into Tailwind's `@theme`. This means classes like `bg-accent`,
 `text-muted`, `border-line`, and `font-display` are all real Tailwind utilities now,
 not one-off hex codes. If the palette ever changes, it only needs to change in one place.

@@ -1,4 +1,4 @@
--- Pacer: per-run chat
+-- TwendeRun: per-run chat
 -- Run this in the Supabase SQL Editor AFTER schema.sql and
 -- 0002_auth_and_joins.sql (Project -> SQL Editor -> New query -> paste -> Run).
 -- Safe to run more than once.

@@ -1,4 +1,4 @@
--- Pacer: feedback, reports and blocking
+-- TwendeRun: feedback, reports and blocking
 -- Run this in the Supabase SQL Editor (New query -> paste -> Run). Safe to run once.
 --
 -- feedback : messages people send from the app's Feedback page

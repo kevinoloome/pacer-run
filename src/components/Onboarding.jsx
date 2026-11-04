@@ -68,11 +68,12 @@ export default function Onboarding() {
             <>
               <Icon>🏃</Icon>
               <h2 className="font-display font-bold text-[23px] leading-tight mb-2.5">
-                Never run alone again
+                Find your running partner
               </h2>
               <p className="text-muted text-[13.5px] leading-relaxed">
-                Pacer matches you with runners nearby who want to go at the same time, at the same
-                pace. Post a run or join one. It takes about a minute to get set up.
+                TwendeRun matches you with runners nearby who share your pace, schedule and passion for
+                running. Swipe through runs, find your running match, join communities, chat and run
+                together.
               </p>
             </>
           )}
@@ -81,7 +82,7 @@ export default function Onboarding() {
             <>
               <Icon>👆</Icon>
               <h2 className="font-display font-bold text-[23px] leading-tight mb-4">
-                How Pacer works
+                How TwendeRun works
               </h2>
               <ul className="flex flex-col gap-4">
                 <Point icon="♡">

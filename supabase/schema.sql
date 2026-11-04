@@ -1,4 +1,4 @@
--- Pacer: initial database schema
+-- TwendeRun: initial database schema
 -- Run this in the Supabase SQL Editor (Project → SQL Editor → New query → paste → Run).
 --
 -- This starts with just the `runs` table, enough to get Discover reading from a real

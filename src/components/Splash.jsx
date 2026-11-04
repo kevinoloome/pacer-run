@@ -6,7 +6,7 @@ const SEEN_KEY = "pacer_splash_seen";
 const SHOW_MS = 2600;
 const FADE_MS = 450;
 
-// Brand animation shown when the link first opens: "pacer" rises in, the lime
+// Brand animation shown when the link first opens: "TwendeRun" rises in, the lime
 // dot drops and bounces, a pace line runs underneath, then the tagline fades
 // in. After it, the intro steps (first visit) or the runs appear.
 //
@@ -55,7 +55,7 @@ export default function Splash() {
     }, FADE_MS);
   }
 
-  const letters = "pacer".split("");
+  const letters = "TwendeRun".split("");
 
   return (
     <div
@@ -64,13 +64,13 @@ export default function Splash() {
       className="fixed inset-0 z-[200] bg-bg flex flex-col items-center justify-center"
       style={{ opacity: leaving ? 0 : 1, transition: `opacity ${FADE_MS}ms ease` }}
     >
-      <div className="flex items-end font-display font-bold text-[64px] leading-none">
+      <div className="flex items-end font-display font-bold text-[46px] leading-none">
         {letters.map((ch, i) => (
           <span key={i} className="splash-letter" style={{ animationDelay: `${i * 0.08}s` }}>
             {ch}
           </span>
         ))}
-        <span className="splash-dot text-accent">.</span>
+        <span className="splash-dot text-accent" style={{ animationDelay: `${letters.length * 0.08 + 0.1}s` }}>.</span>
       </div>
 
       <div className="relative w-[170px] h-[2px] mt-6 bg-line rounded-full">

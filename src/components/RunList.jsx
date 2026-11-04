@@ -274,7 +274,7 @@ export default function RunList() {
                       : "bg-bg-elevated border-line text-muted"
                   }`}
                 >
-                  {c === "all" ? "🌍 All places" : c}
+                  {c === "all" ? "All places" : c}
                 </button>
               ))}
             </div>

@@ -1,4 +1,4 @@
--- Pacer: accounts, hosting, and joining
+-- TwendeRun: accounts, hosting, and joining
 -- Run this in the Supabase SQL Editor AFTER schema.sql (Project -> SQL Editor
 -- -> New query -> paste -> Run). Safe to run once; re-running is guarded with
 -- `if not exists` / `or replace` everywhere it matters.

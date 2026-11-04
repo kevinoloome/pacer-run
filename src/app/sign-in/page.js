@@ -43,7 +43,7 @@ export default function SignInPage() {
   return (
     <div className="px-6 py-12 pb-28 max-w-[430px] mx-auto">
       <div className="font-display font-bold text-xl mb-7">
-        pacer<span className="text-accent">.</span>
+        TwendeRun<span className="text-accent">.</span>
       </div>
       <h1 className="font-display font-bold text-2xl mb-1.5">Welcome back</h1>
       <p className="text-muted text-[13.5px] mb-6">Sign in to find your next run.</p>
@@ -78,7 +78,7 @@ export default function SignInPage() {
       </form>
 
       <div className="flex justify-center gap-1 mt-5 text-[13px]">
-        <span className="text-muted">New to Pacer?</span>
+        <span className="text-muted">New to TwendeRun?</span>
         <Link href="/sign-up" className="font-semibold text-accent">
           Create an account
         </Link>

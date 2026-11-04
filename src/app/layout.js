@@ -23,8 +23,8 @@ const plexMono = IBM_Plex_Mono({
 });
 
 export const metadata = {
-  title: "Pacer",
-  description: "Find your next run",
+  title: "TwendeRun",
+  description: "Find runners to run with in Kenya. Swipe, join, and run together.",
 };
 
 export default function RootLayout({ children }) {

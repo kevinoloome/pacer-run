@@ -99,18 +99,18 @@ export default function RunForm({ initial = {}, minCapacity = 1, submitLabel, bu
       <label className="block mb-3.5">
         <div className="text-[12px] font-medium text-muted mb-1.5">City</div>
         <input
-          list="pacer-cities"
+          list="twenderun-cities"
           value={city}
           onChange={(e) => setCity(e.target.value)}
           placeholder="Nairobi, Kenya"
           className="w-full bg-bg-elevated border border-line rounded-xl px-3.5 py-3 text-[14px] text-text placeholder:text-muted focus:outline-none focus:border-accent"
         />
-        <datalist id="pacer-cities">
+        <datalist id="twenderun-cities">
           {CITIES.map((c) => (
             <option key={c.name} value={c.name} />
           ))}
         </datalist>
-        <div className="text-[11px] text-muted mt-1">Pick one or type your own, e.g. Lusaka, Zambia.</div>
+        <div className="text-[11px] text-muted mt-1">Pick one or type your own, e.g. Nanyuki, Kenya.</div>
       </label>
 
       <AuthInput
@@ -121,7 +121,7 @@ export default function RunForm({ initial = {}, minCapacity = 1, submitLabel, bu
       />
 
       <label className="block mb-3.5">
-        <div className="text-[12px] font-medium text-muted mb-1.5">Date and time (local time in the city)</div>
+        <div className="text-[12px] font-medium text-muted mb-1.5">Date and time (Kenya time)</div>
         <input
           type="datetime-local"
           value={startsAt}

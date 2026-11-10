@@ -7,11 +7,13 @@ import RunForm from "@/components/RunForm";
 import { useAuth } from "@/lib/AuthProvider";
 import { postRun, fetchMyProfile, updateMyProfile } from "@/lib/runs";
 import AuthInput from "@/components/AuthInput";
+import ShareRun from "@/components/ShareRun";
 
 function PostRun() {
   const router = useRouter();
   const { user } = useAuth();
   const [posted, setPosted] = useState(false);
+  const [postedRun, setPostedRun] = useState(null);
   const [formKey, setFormKey] = useState(0);
   const [name, setName] = useState("");
   const [currentName, setCurrentName] = useState("");
@@ -38,7 +40,14 @@ function PostRun() {
       // Blank: post under the existing name (guests get "Runner 482" automatically).
       hostName = profile?.display_name || user.email || "Runner";
     }
-    await postRun(input, user.id, hostName);
+    const row = await postRun(input, user.id, hostName);
+    setPostedRun({
+      id: row.id,
+      location: row.location,
+      city: row.city,
+      when: row.when_text,
+      distance: row.distance_km,
+    });
     setPosted(true);
   }
 
@@ -47,8 +56,13 @@ function PostRun() {
       <div className="px-5 py-16 pb-28 max-w-[430px] mx-auto text-center">
         <h1 className="font-display font-bold text-2xl mb-2">Run posted</h1>
         <p className="text-muted text-[13.5px] mb-6">
-          Your run is live on Discover. Share your link with your running family so they can find it.
+          Your run is live on Discover. Send the link to your friends so they can join you.
         </p>
+        {postedRun && (
+          <div className="mb-6">
+            <ShareRun run={postedRun} />
+          </div>
+        )}
         <div className="flex gap-2.5 justify-center">
           <button
             onClick={() => {

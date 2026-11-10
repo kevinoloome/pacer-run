@@ -8,6 +8,7 @@ import { useAuth } from "@/lib/AuthProvider";
 import { fetchRun, fetchParticipants, fetchMyProfile, cancelRun } from "@/lib/runs";
 import { fetchMessages, sendMessage, subscribeToMessages } from "@/lib/chat";
 import { useRouter } from "next/navigation";
+import ShareRun from "@/components/ShareRun";
 import { REPORT_REASONS, reportRun, blockUser, fetchBlockedIds } from "@/lib/safety";
 
 const POLL_MS = 8000;
@@ -115,6 +116,12 @@ function RunDetail() {
       {!run.cancelled && run.isPast && (
         <div className="mt-4 rounded-xl border border-line bg-bg-elevated text-muted text-[13px] px-3.5 py-2.5">
           This run has finished.
+        </div>
+      )}
+
+      {!run.cancelled && !run.isPast && (
+        <div className="mt-4">
+          <ShareRun run={run} compact />
         </div>
       )}
 

@@ -23,6 +23,7 @@ const plexMono = IBM_Plex_Mono({
 });
 
 export const metadata = {
+  metadataBase: new URL(process.env.NEXT_PUBLIC_SITE_URL || "https://pacer-run-phi.vercel.app"),
   title: "TwendeRun",
   description: "Find runners to run with in Kenya. Swipe, join, and run together.",
 };

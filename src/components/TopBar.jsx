@@ -13,7 +13,7 @@ export default function TopBar() {
       </div>
       <div className="flex items-center gap-2">
         <div className="text-[12px] text-muted bg-bg-elevated border border-line rounded-full px-3 py-1.5">
-          🌍 Worldwide
+          🇰🇪 Kenya
         </div>
         {showSignIn && (
           <Link

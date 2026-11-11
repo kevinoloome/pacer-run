@@ -3,6 +3,7 @@ import "./globals.css";
 import { AuthProvider } from "@/lib/AuthProvider";
 import BottomNav from "@/components/BottomNav";
 import Splash from "@/components/Splash";
+import AccountNudge from "@/components/AccountNudge";
 
 const spaceGrotesk = Space_Grotesk({
   variable: "--font-display",
@@ -38,6 +39,7 @@ export default function RootLayout({ children }) {
         <AuthProvider>
           <Splash />
           {children}
+          <AccountNudge />
           <BottomNav />
         </AuthProvider>
       </body>

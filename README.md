@@ -99,7 +99,7 @@ cancelled" under My runs. Hosts can edit or cancel their own runs from the
 run's page. In the Supabase SQL Editor, run `supabase/0004_run_dates_and_cancel.sql`
 once, after `0003_run_chat.sql`.
 
-## Worldwide runs (migration 0005)
+## Run locations (migration 0005)
 
 Run `supabase/0005_worldwide.sql` in the Supabase SQL Editor. It adds `city` and `tz`
 (time zone) to runs and marks existing runs as Nairobi. Run times are shown in the run's

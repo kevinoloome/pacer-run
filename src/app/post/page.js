@@ -8,6 +8,7 @@ import { useAuth } from "@/lib/AuthProvider";
 import { postRun, fetchMyProfile, updateMyProfile } from "@/lib/runs";
 import AuthInput from "@/components/AuthInput";
 import ShareRun from "@/components/ShareRun";
+import { markEngaged, isDefaultName } from "@/lib/nudge";
 
 function PostRun() {
   const router = useRouter();
@@ -37,8 +38,12 @@ function PostRun() {
       // A name is in the box: use it, and save it so it sticks for next time.
       if (hostName !== currentName) await updateMyProfile(user.id, { display_name: hostName });
     } else {
-      // Blank: post under the existing name (guests get "Runner 482" automatically).
-      hostName = profile?.display_name || user.email || "Runner";
+      // Hosts need a real name: other runners are trusting them with a meeting place.
+      const existing = profile?.display_name || "";
+      if (isDefaultName(existing) && !user.email) {
+        throw new Error("Please enter your name so runners know who is hosting.");
+      }
+      hostName = existing || user.email || "Runner";
     }
     const row = await postRun(input, user.id, hostName);
     setPostedRun({
@@ -49,6 +54,7 @@ function PostRun() {
       distance: row.distance_km,
     });
     setPosted(true);
+    markEngaged();
   }
 
   if (posted) {
@@ -90,10 +96,10 @@ function PostRun() {
       <p className="text-muted text-[13.5px] mb-6">Invite your running family to join you.</p>
       {(
         <AuthInput
-          label="Your name (runners will see this)"
+          label="Your name (required, runners will see this)"
           value={name}
           onChange={(e) => setName(e.target.value)}
-          placeholder="Leave blank to post as a random Runner name"
+          placeholder="e.g. Amina"
         />
       )}
       <RunForm

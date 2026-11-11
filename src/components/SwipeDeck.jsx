@@ -2,6 +2,7 @@
 
 import { useState, useRef } from "react";
 import { matchBadge } from "@/lib/pace";
+import { goingLabel } from "@/lib/runs";
 
 const SURFACE_ICON = { trail: "🌲", road: "🏙️", track: "🏟️" };
 const SURFACE_GRADIENT = {
@@ -263,7 +264,7 @@ function DeckCard({ run, paceRange, style, handlers, dimmed, interactive }) {
             ))}
           </div>
           <div className="text-[11.5px] text-muted">
-            {run.joinedCount}/{run.capacity} runners going
+            {goingLabel(run)} runners going
             {extra > 0 ? ` , +${extra} more` : ""}
           </div>
         </div>

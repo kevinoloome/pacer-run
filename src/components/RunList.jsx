@@ -4,7 +4,8 @@ import { useState, useEffect } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { matchBadge } from "@/lib/pace";
-import { fetchRuns, joinRun, leaveRun, fetchMyProfile, updateMyProfile, JOIN_RESULT } from "@/lib/runs";
+import { markEngaged } from "@/lib/nudge";
+import { fetchRuns, joinRun, leaveRun, fetchMyProfile, updateMyProfile, JOIN_RESULT, goingLabel, hasLimit } from "@/lib/runs";
 import { defaultPaceRange } from "@/lib/mockData";
 import SwipeDeck from "./SwipeDeck";
 import { useAuth, ensureSession } from "@/lib/AuthProvider";
@@ -153,6 +154,7 @@ export default function RunList() {
         )
       );
       showToast("You're in! Find it under My runs.");
+      markEngaged();
       // The first join also creates the guest account: reload so "You're in" sticks.
       if (createdGuest) fetchRuns(uid).then(setRuns).catch(() => {});
       return true;
@@ -360,7 +362,7 @@ export default function RunList() {
 function RunItem({ run, paceRange, isMine, busy, onJoin, onLeave }) {
   const badge = matchBadge(run.paceMinSec, paceRange);
   const avatars = run.joinedInitials.slice(0, 3);
-  const full = run.joinedCount >= run.capacity;
+  const full = hasLimit(run) && run.joinedCount >= run.capacity;
 
   return (
     <div className="rounded-[18px] border border-line bg-bg-elevated overflow-hidden">
@@ -450,7 +452,7 @@ function RunItem({ run, paceRange, isMine, busy, onJoin, onLeave }) {
               ))}
             </div>
             <div className="text-[11.5px] text-muted">
-              {run.joinedCount}/{run.capacity} going
+              {goingLabel(run)} going
             </div>
           </div>
 

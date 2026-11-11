@@ -84,10 +84,17 @@ export const JOIN_RESULT = {
 // instant "this run is full" message), and enforced again by a database
 // trigger that catches the race where two people join the last spot at the
 // same instant.
+// A run with no limit stores this big number in `capacity`, so the database
+// needs no change. Anything at or above it is shown as "no limit".
+export const NO_LIMIT = 1000;
+export const hasLimit = (run) => run.capacity < NO_LIMIT;
+export const goingLabel = (run) =>
+  hasLimit(run) ? `${run.joinedCount}/${run.capacity}` : `${run.joinedCount}`;
+
 export async function joinRun(run, userId) {
   if (run.isJoinedByMe) return JOIN_RESULT.ALREADY_JOINED;
   if (run.cancelled || run.isPast) return JOIN_RESULT.CLOSED;
-  if (run.joinedCount >= run.capacity) return JOIN_RESULT.FULL;
+  if (hasLimit(run) && run.joinedCount >= run.capacity) return JOIN_RESULT.FULL;
 
   const { error } = await supabase
     .from("run_joins")

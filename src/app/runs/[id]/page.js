@@ -5,7 +5,7 @@ import Link from "next/link";
 import { useParams } from "next/navigation";
 import RequireAuth from "@/components/RequireAuth";
 import { useAuth } from "@/lib/AuthProvider";
-import { fetchRun, fetchParticipants, fetchMyProfile, cancelRun } from "@/lib/runs";
+import { fetchRun, fetchParticipants, fetchMyProfile, cancelRun, goingLabel } from "@/lib/runs";
 import { fetchMessages, sendMessage, subscribeToMessages } from "@/lib/chat";
 import { useRouter } from "next/navigation";
 import ShareRun from "@/components/ShareRun";
@@ -156,7 +156,7 @@ function RunDetail() {
       <div className="flex gap-2.5 mt-4">
         <Stat label="distance" value={run.distance} />
         <Stat label="pace" value={run.pace} />
-        <Stat label="going" value={`${run.joinedCount}/${run.capacity}`} />
+        <Stat label="going" value={goingLabel(run)} />
       </div>
 
       {run.note && (

@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import RequireAuth from "@/components/RequireAuth";
 import { useAuth } from "@/lib/AuthProvider";
-import { fetchMyRuns } from "@/lib/runs";
+import { fetchMyRuns, goingLabel } from "@/lib/runs";
 
 function MyRuns() {
   const { user } = useAuth();
@@ -120,7 +120,7 @@ function Section({ title, runs, tag, dim }) {
                 {run.distance} &middot; {run.pace}
               </span>
               <span>
-                {run.joinedCount}/{run.capacity} going &middot;{" "}
+                {goingLabel(run)} going &middot;{" "}
                 <span className="text-accent font-semibold">Details &amp; chat &rsaquo;</span>
               </span>
             </div>

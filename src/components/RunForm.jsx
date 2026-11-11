@@ -3,6 +3,7 @@
 import { useState } from "react";
 import AuthInput from "@/components/AuthInput";
 import { parsePace } from "@/lib/pace";
+import { NO_LIMIT } from "@/lib/runs";
 import { dayCatOf, fromInputValue, toInputValue } from "@/lib/when";
 import { CITIES, getHomeCity, setHomeCity, tzForCity } from "@/lib/cities";
 
@@ -22,7 +23,6 @@ export default function RunForm({ initial = {}, minCapacity = 1, submitLabel, bu
   const [distanceKm, setDistanceKm] = useState(initial.distanceKm ?? "");
   const [pace, setPace] = useState(initial.pace ?? "");
   const [surface, setSurface] = useState(initial.surface ?? "trail");
-  const [capacity, setCapacity] = useState(initial.capacity ?? "6");
   const [note, setNote] = useState(initial.note ?? "");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
@@ -62,15 +62,8 @@ export default function RunForm({ initial = {}, minCapacity = 1, submitLabel, bu
       setError("Enter pace as m:ss, e.g. 5:30.");
       return;
     }
-    const cap = parseInt(capacity, 10);
-    if (!cap || cap <= 0) {
-      setError("Enter a valid capacity.");
-      return;
-    }
-    if (cap < minCapacity) {
-      setError(`${minCapacity} runners have already joined, so capacity can't be lower than that.`);
-      return;
-    }
+    // Runs have no cap on the number of runners: communities can be any size.
+    const cap = NO_LIMIT;
 
     setLoading(true);
     try {
@@ -166,14 +159,6 @@ export default function RunForm({ initial = {}, minCapacity = 1, submitLabel, bu
           ))}
         </div>
       </div>
-
-      <AuthInput
-        label="Capacity (max runners)"
-        inputMode="numeric"
-        value={capacity}
-        onChange={(e) => setCapacity(e.target.value)}
-        placeholder="6"
-      />
 
       <label className="block mb-3.5">
         <div className="text-[12px] font-medium text-muted mb-1.5">Note (optional)</div>

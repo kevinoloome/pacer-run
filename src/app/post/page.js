@@ -7,13 +7,13 @@ import RunForm from "@/components/RunForm";
 import { useAuth } from "@/lib/AuthProvider";
 import { postRun, fetchMyProfile, updateMyProfile } from "@/lib/runs";
 import AuthInput from "@/components/AuthInput";
+import Link from "next/link";
 import ShareRun from "@/components/ShareRun";
-import SaveAccountForm from "@/components/SaveAccountForm";
 import { markEngaged, isDefaultName } from "@/lib/nudge";
 
 function PostRun() {
   const router = useRouter();
-  const { user, isGuest } = useAuth();
+  const { user } = useAuth();
   const [posted, setPosted] = useState(false);
   const [postedRun, setPostedRun] = useState(null);
   const [formKey, setFormKey] = useState(0);
@@ -56,22 +56,6 @@ function PostRun() {
     });
     setPosted(true);
     markEngaged();
-  }
-
-  if (isGuest) {
-    return (
-      <div className="px-5 py-8 pb-28 max-w-[430px] mx-auto">
-        <h1 className="font-display font-bold text-2xl mb-1.5">Post a run</h1>
-        <p className="text-muted text-[13.5px] mb-6">
-          Joining a run needs no sign-up, but hosting one does. People are trusting you with a meeting
-          place, so create your account first. It takes under a minute.
-        </p>
-        <SaveAccountForm
-          title="Create your account to post a run"
-          intro="Add your email and a password. Your guest runs and chats come with you."
-        />
-      </div>
-    );
   }
 
   if (posted) {

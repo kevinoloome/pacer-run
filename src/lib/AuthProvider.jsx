@@ -61,7 +61,8 @@ export function AuthProvider({ children }) {
         session,
         loading,
         user: session?.user ?? null,
-        isGuest: !!session?.user?.is_anonymous,
+        // A user with an email is a real account, even if a stale session still says anonymous.
+        isGuest: !!session?.user?.is_anonymous && !session?.user?.email,
       }}>
       {children}
     </AuthContext.Provider>

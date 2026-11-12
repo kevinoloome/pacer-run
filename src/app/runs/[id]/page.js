@@ -5,7 +5,8 @@ import Link from "next/link";
 import { useParams } from "next/navigation";
 import RequireAuth from "@/components/RequireAuth";
 import { useAuth } from "@/lib/AuthProvider";
-import { fetchRun, fetchParticipants, fetchMyProfile, cancelRun, goingLabel } from "@/lib/runs";
+import { fetchRun, fetchParticipants, fetchMyProfile, cancelRun, goingLabel, joinRun, JOIN_RESULT } from "@/lib/runs";
+import { markEngaged } from "@/lib/nudge";
 import { fetchMessages, sendMessage, subscribeToMessages } from "@/lib/chat";
 import { useRouter } from "next/navigation";
 import ShareRun from "@/components/ShareRun";
@@ -32,6 +33,8 @@ function RunDetail() {
   const [run, setRun] = useState(undefined); // undefined = loading, null = not found
   const [people, setPeople] = useState([]);
   const [error, setError] = useState(false);
+  const [joining, setJoining] = useState(false);
+  const [joinMsg, setJoinMsg] = useState("");
 
   useEffect(() => {
     let cancelled = false;
@@ -70,6 +73,32 @@ function RunDetail() {
 
   const isHost = run.hostId === user.id;
   const isMember = isHost || run.isJoinedByMe;
+
+  async function handleJoin() {
+    setJoining(true);
+    setJoinMsg("");
+    try {
+      const result = await joinRun(run, user.id);
+      if (result === JOIN_RESULT.FULL) {
+        setJoinMsg("Sorry, this run is full.");
+      } else if (result === JOIN_RESULT.CLOSED) {
+        setJoinMsg("This run is no longer open.");
+      } else {
+        setRun({
+          ...run,
+          isJoinedByMe: true,
+          joinedCount: result === JOIN_RESULT.JOINED ? run.joinedCount + 1 : run.joinedCount,
+        });
+        fetchParticipants(id).then(setPeople).catch(() => {});
+        markEngaged();
+      }
+    } catch (err) {
+      console.error("Failed to join run:", err);
+      setJoinMsg("Couldn't join this run, try again.");
+    } finally {
+      setJoining(false);
+    }
+  }
 
   async function handleCancel() {
     if (
@@ -144,11 +173,30 @@ function RunDetail() {
         </div>
       )}
 
+      {!isHost && !run.cancelled && !run.isPast && (
+        <div className="mt-4 mb-3">
+          {run.isJoinedByMe ? (
+            <div className="w-full text-center bg-accent/10 border border-accent/40 text-accent font-display font-bold text-[14.5px] rounded-2xl py-3">
+              &#10003; You&apos;re in this run
+            </div>
+          ) : (
+            <button
+              onClick={handleJoin}
+              disabled={joining}
+              className="w-full bg-accent text-bg font-display font-bold text-[16px] rounded-2xl py-3.5 disabled:opacity-60"
+            >
+              {joining ? "Joining..." : "Join this run"}
+            </button>
+          )}
+          {joinMsg && <p className="text-accent-warm text-[12.5px] mt-2 text-center">{joinMsg}</p>}
+        </div>
+      )}
+
       <a
         href={mapsUrl(run.location, run.city)}
         target="_blank"
         rel="noopener noreferrer"
-        className="mt-4 flex items-center justify-center gap-2 w-full bg-accent text-bg font-display font-bold text-[14.5px] rounded-2xl py-3"
+        className="mt-4 flex items-center justify-center gap-2 w-full bg-bg-elevated border border-line text-text font-display font-semibold text-[14px] rounded-2xl py-3"
       >
         📍 Open in Google Maps
       </a>
@@ -198,14 +246,6 @@ function RunDetail() {
         ) : (
           <div className="border border-dashed border-line rounded-2xl p-6 text-center text-muted text-[13px]">
             Join this run to see the chat and chat with the group.
-            <div className="mt-3">
-              <Link
-                href="/"
-                className="inline-block bg-accent text-bg font-display font-bold text-[13.5px] rounded-xl py-2.5 px-5"
-              >
-                Back to runs
-              </Link>
-            </div>
           </div>
         )}
       </div>

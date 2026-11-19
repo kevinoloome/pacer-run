@@ -5,9 +5,11 @@ import Link from "next/link";
 import RequireAuth from "@/components/RequireAuth";
 import { useAuth } from "@/lib/AuthProvider";
 import { fetchMyRuns, goingLabel } from "@/lib/runs";
+import { useUnread } from "@/lib/unread";
 
 function MyRuns() {
   const { user } = useAuth();
+  const { counts } = useUnread();
   const [runs, setRuns] = useState([]);
   const [status, setStatus] = useState("loading"); // 'loading' | 'ready' | 'error'
 
@@ -72,18 +74,18 @@ function MyRuns() {
         </div>
       )}
 
-      {status === "ready" && going.length > 0 && <Section title="Going" runs={going} tag="Going" />}
+      {status === "ready" && going.length > 0 && <Section title="Going" runs={going} tag="Going" counts={counts} />}
       {status === "ready" && hosting.length > 0 && (
-        <Section title="Hosting" runs={hosting} tag="Hosting" />
+        <Section title="Hosting" runs={hosting} tag="Hosting" counts={counts} />
       )}
       {status === "ready" && over.length > 0 && (
-        <Section title="Past & cancelled" runs={over} tag="" dim />
+        <Section title="Past & cancelled" runs={over} tag="" dim counts={counts} />
       )}
     </div>
   );
 }
 
-function Section({ title, runs, tag, dim }) {
+function Section({ title, runs, tag, dim, counts = {} }) {
   return (
     <div className="mb-7">
       <div className="text-[12px] font-semibold text-muted uppercase tracking-wider mb-2.5">
@@ -121,7 +123,13 @@ function Section({ title, runs, tag, dim }) {
               </span>
               <span>
                 {goingLabel(run)} going &middot;{" "}
-                <span className="text-accent font-semibold">Details &amp; chat &rsaquo;</span>
+                {counts[run.id] > 0 ? (
+                  <span className="bg-accent text-bg font-bold rounded-full px-2 py-0.5 text-[11px]">
+                    {counts[run.id]} new {counts[run.id] === 1 ? "message" : "messages"}
+                  </span>
+                ) : (
+                  <span className="text-accent font-semibold">Details &amp; chat &rsaquo;</span>
+                )}
               </span>
             </div>
           </Link>

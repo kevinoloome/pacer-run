@@ -4,6 +4,7 @@ import { AuthProvider } from "@/lib/AuthProvider";
 import BottomNav from "@/components/BottomNav";
 import Splash from "@/components/Splash";
 import AccountNudge from "@/components/AccountNudge";
+import RegisterSW from "@/components/RegisterSW";
 
 const spaceGrotesk = Space_Grotesk({
   variable: "--font-display",
@@ -25,9 +26,21 @@ const plexMono = IBM_Plex_Mono({
 
 export const metadata = {
   metadataBase: new URL(process.env.NEXT_PUBLIC_SITE_URL || "https://app.twenderun.com"),
-  title: "TwendeRun",
+  title: "TwendeRun. Find your running partner.",
   description: "Find runners to run with in Kenya. Swipe, join, and run together.",
+  openGraph: {
+    title: "TwendeRun. Find your running partner.",
+    description: "Find runners to run with in Kenya. Swipe, join, and run together.",
+    siteName: "TwendeRun",
+    images: ["/og.png"],
+  },
+  twitter: { card: "summary_large_image", images: ["/og.png"] },
+  manifest: "/manifest.webmanifest",
+  icons: { icon: "/icons/icon-192.png", apple: "/icons/apple-touch-icon.png" },
+  appleWebApp: { capable: true, title: "TwendeRun", statusBarStyle: "black-translucent" },
 };
+
+export const viewport = { themeColor: "#12181D" };
 
 export default function RootLayout({ children }) {
   return (
@@ -39,6 +52,7 @@ export default function RootLayout({ children }) {
         <AuthProvider>
           <Splash />
           {children}
+          <RegisterSW />
           <AccountNudge />
           <BottomNav />
         </AuthProvider>

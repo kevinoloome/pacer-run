@@ -7,9 +7,11 @@ import RequireAuth from "@/components/RequireAuth";
 import { useAuth } from "@/lib/AuthProvider";
 import { fetchRun, fetchParticipants, fetchMyProfile, cancelRun, goingLabel, joinRun, JOIN_RESULT } from "@/lib/runs";
 import { markEngaged } from "@/lib/nudge";
+import { markRead } from "@/lib/unread";
 import { fetchMessages, sendMessage, subscribeToMessages } from "@/lib/chat";
 import { useRouter } from "next/navigation";
 import ShareRun from "@/components/ShareRun";
+import StoryComposer from "@/components/StoryComposer";
 import { REPORT_REASONS, reportRun, blockUser, fetchBlockedIds } from "@/lib/safety";
 
 const POLL_MS = 8000;
@@ -237,6 +239,8 @@ function RunDetail() {
 
       {!isHost && <SafetyMenu run={run} user={user} />}
 
+      {isMember && run.isPast && !run.cancelled && <StoryComposer run={run} user={user} />}
+
       <div className="mt-6">
         <div className="text-[12px] font-semibold text-muted uppercase tracking-wider mb-2">
           Run chat
@@ -420,6 +424,11 @@ function Chat({ runId, user }) {
   useEffect(() => {
     endRef.current?.scrollIntoView({ block: "nearest" });
   }, [messages.length]);
+
+  // Someone looking at the chat has read everything in it.
+  useEffect(() => {
+    if (status === "ready") markRead(user.id, runId);
+  }, [status, messages.length, runId, user.id]);
 
   async function handleSend(e) {
     e.preventDefault();

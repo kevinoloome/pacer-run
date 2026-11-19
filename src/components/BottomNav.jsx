@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useAuth } from "@/lib/AuthProvider";
+import { useUnread } from "@/lib/unread";
 
 const TABS = [
   { href: "/", label: "Discover", icon: "🧭" },
@@ -17,6 +18,7 @@ const TABS = [
 export default function BottomNav() {
   const pathname = usePathname();
   const { loading } = useAuth();
+  const { total: unreadTotal } = useUnread();
   const tabs = TABS;
 
   if (loading) return null;
@@ -33,9 +35,17 @@ export default function BottomNav() {
             <Link
               key={tab.href}
               href={tab.href}
-              className="flex-1 flex flex-col items-center gap-0.5 py-2.5"
+              className="flex-1 flex flex-col items-center gap-0.5 py-2.5 relative"
             >
               <span className={`text-[18px] leading-none ${active ? "" : "opacity-60"}`}>{tab.icon}</span>
+              {tab.href === "/runs" && unreadTotal > 0 && (
+                <span
+                  aria-label={`${unreadTotal} new messages`}
+                  className="absolute top-1.5 left-1/2 ml-2 min-w-[16px] h-4 px-1 rounded-full bg-accent text-bg text-[10px] font-bold flex items-center justify-center"
+                >
+                  {unreadTotal > 9 ? "9+" : unreadTotal}
+                </span>
+              )}
               <span
                 className={`text-[11px] font-medium ${active ? "text-accent" : "text-muted"}`}
               >

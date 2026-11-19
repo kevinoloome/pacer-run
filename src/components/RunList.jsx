@@ -8,6 +8,7 @@ import { markEngaged } from "@/lib/nudge";
 import { fetchRuns, joinRun, leaveRun, fetchMyProfile, updateMyProfile, JOIN_RESULT, goingLabel, hasLimit } from "@/lib/runs";
 import { defaultPaceRange } from "@/lib/mockData";
 import SwipeDeck from "./SwipeDeck";
+import StoriesRow from "./StoriesRow";
 import { useAuth, ensureSession } from "@/lib/AuthProvider";
 import { getLocalPace, PACE_CHANGED_EVENT } from "@/lib/localPace";
 import { getHomeCity } from "@/lib/cities";
@@ -239,6 +240,7 @@ export default function RunList() {
 
       {status === "ready" && (
         <>
+          <StoriesRow blockedIds={blockedIds} />
           <div className="flex items-center justify-between mb-3">
             <div className="flex rounded-full border border-line bg-bg-elevated p-0.5">
               {[

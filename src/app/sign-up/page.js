@@ -113,6 +113,18 @@ export default function SignUpPage() {
           Sign in
         </Link>
       </div>
+      <p className="text-center text-muted text-[11.5px] mt-4">
+        By creating an account you agree to our{" "}
+        <a
+          href="https://twenderun.com/privacy"
+          target="_blank"
+          rel="noopener noreferrer"
+          className="underline"
+        >
+          Privacy Policy
+        </a>
+        .
+      </p>
     </div>
   );
 }

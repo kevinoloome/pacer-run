@@ -172,6 +172,15 @@ function ProfileForm() {
         Send feedback
       </Link>
 
+      <a
+        href="https://twenderun.com/privacy"
+        target="_blank"
+        rel="noopener noreferrer"
+        className="block text-center text-muted text-[12.5px] underline mt-4"
+      >
+        Privacy policy
+      </a>
+
       <button
         onClick={handleSignOut}
         className="w-full bg-bg-elevated border border-line text-accent-warm font-display font-semibold text-[14px] rounded-2xl py-3.5 mt-3"

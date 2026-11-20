@@ -12,6 +12,7 @@ import { fetchMessages, sendMessage, subscribeToMessages } from "@/lib/chat";
 import { useRouter } from "next/navigation";
 import ShareRun from "@/components/ShareRun";
 import StoryComposer from "@/components/StoryComposer";
+import CommunityBadge from "@/components/CommunityBadge";
 import { REPORT_REASONS, reportRun, blockUser, fetchBlockedIds } from "@/lib/safety";
 
 const POLL_MS = 8000;
@@ -134,7 +135,8 @@ function RunDetail() {
         &lsaquo; My runs
       </Link>
 
-      <h1 className="font-display font-bold text-[22px] leading-tight mt-3">{run.location}</h1>
+      <div className="mt-3"><CommunityBadge run={run} /></div>
+      <h1 className="font-display font-bold text-[22px] leading-tight mt-2">{run.location}</h1>
       <div className="text-[13.5px] text-muted mt-1">
         {run.when} &middot; {run.city}
       </div>

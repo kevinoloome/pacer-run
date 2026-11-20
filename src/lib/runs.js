@@ -39,6 +39,9 @@ function mapRun(row, myJoinedRunIds) {
     hostPhoto: row.host_photo,
     hostId: row.host_id,
     capacity: row.capacity,
+    runType: row.run_type ?? "run",
+    communityName: row.community_name ?? "",
+    isGroup: (row.run_type ?? "run") === "group",
     joinedInitials: legacyJoined,
     joinedCount: legacyJoined.length + realJoinedCount,
     isJoinedByMe: myJoinedRunIds.has(row.id),
@@ -141,6 +144,9 @@ export async function postRun(input, userId, hostName) {
       pace_sec: input.paceSec,
       note: input.note || null,
       capacity: input.capacity,
+      ...(input.runType === "group"
+        ? { run_type: "group", community_name: input.communityName || null }
+        : {}),
       host_id: userId,
       host_name: hostName,
       host_verified: false,
@@ -253,6 +259,9 @@ export async function updateRun(runId, userId, input) {
       pace_sec: input.paceSec,
       note: input.note || null,
       capacity: input.capacity,
+      ...(input.runType === "group" || input.communityName !== undefined
+        ? { run_type: input.runType, community_name: input.communityName || null }
+        : {}),
     })
     .eq("id", runId)
     .eq("host_id", userId);

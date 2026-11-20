@@ -59,6 +59,8 @@ function EditRun() {
           surface: run.surface,
           capacity: String(run.capacity),
           note: run.note ?? "",
+          runType: run.runType,
+          communityName: run.communityName,
         }}
         minCapacity={run.joinedCount}
         submitLabel="Save changes"

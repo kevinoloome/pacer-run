@@ -13,6 +13,7 @@ import { useAuth, ensureSession } from "@/lib/AuthProvider";
 import { getLocalPace, PACE_CHANGED_EVENT } from "@/lib/localPace";
 import { getHomeCity } from "@/lib/cities";
 import { fetchBlockedIds } from "@/lib/safety";
+import CommunityBadge from "@/components/CommunityBadge";
 
 const SURFACE_ICON = { trail: "🌲", road: "🏙️", track: "🏟️" };
 const SURFACE_GRADIENT = {
@@ -50,6 +51,7 @@ export default function RunList() {
   const [paceRange, setPaceRange] = useState(defaultPaceRange);
   const [status, setStatus] = useState("loading"); // 'loading' | 'ready' | 'error'
   const [paceOnly, setPaceOnly] = useState(false);
+  const [groupOnly, setGroupOnly] = useState(false);
   const [dayFilter, setDayFilter] = useState("all");
   const [cityFilter, setCityFilter] = useState(null); // null = not chosen yet
   const [blockedIds, setBlockedIds] = useState(new Set());
@@ -212,6 +214,7 @@ export default function RunList() {
     if (activeCity !== "all" && r.city !== activeCity) return false;
     if (paceOnly && matchBadge(r.paceMinSec, paceRange).cls !== "great") return false;
     if (dayFilter !== "all" && r.dayCat !== dayFilter) return false;
+    if (groupOnly && !r.isGroup) return false;
     return true;
   });
 
@@ -284,6 +287,19 @@ export default function RunList() {
             </div>
           )}
 
+          <Link
+            href="/post?type=group"
+            className="flex items-center justify-between gap-3 rounded-2xl border border-accent/40 bg-accent/10 px-4 py-3 mb-3"
+          >
+            <div>
+              <div className="font-display font-bold text-[14px] text-text">
+                👥 Hosting a group or community run?
+              </div>
+              <div className="text-[12px] text-muted">Post it here so runners and newcomers can find you.</div>
+            </div>
+            <span className="shrink-0 text-[12.5px] font-semibold text-accent">Post it &rsaquo;</span>
+          </Link>
+
           <div className="flex items-center gap-2 mb-4 overflow-x-auto pb-1 -mx-1 px-1">
             <button
               onClick={() => setPaceOnly((v) => !v)}
@@ -294,6 +310,16 @@ export default function RunList() {
               }`}
             >
               Matches my pace
+            </button>
+            <button
+              onClick={() => setGroupOnly((v) => !v)}
+              className={`shrink-0 rounded-full border px-3.5 py-1.5 text-[12px] font-medium ${
+                groupOnly
+                  ? "bg-accent/15 border-accent text-accent"
+                  : "bg-bg-elevated border-line text-muted"
+              }`}
+            >
+              👥 Community runs
             </button>
             {DAY_FILTERS.map((d) => (
               <button
@@ -381,6 +407,7 @@ function RunItem({ run, paceRange, isMine, busy, onJoin, onLeave }) {
         </div>
 
         <div className="absolute top-3 right-3.5 flex flex-col items-end gap-1">
+          <CommunityBadge run={run} />
           {isMine && (
             <div className="text-[10px] font-semibold px-2.5 py-1 rounded-full bg-accent text-bg">
               Your run

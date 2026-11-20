@@ -2,6 +2,7 @@
 
 import { useState, useRef } from "react";
 import { matchBadge } from "@/lib/pace";
+import CommunityBadge from "@/components/CommunityBadge";
 import { goingLabel } from "@/lib/runs";
 
 const SURFACE_ICON = { trail: "🌲", road: "🏙️", track: "🏟️" };
@@ -212,6 +213,7 @@ function DeckCard({ run, paceRange, style, handlers, dimmed, interactive }) {
         >
           {badge.text}
         </div>
+        <CommunityBadge run={run} className="absolute top-11 left-3.5" />
 
         {!run.hostId && (
           <div className="absolute top-3 right-3.5 text-[10px] font-semibold px-2.5 py-1 rounded-full bg-black/40 text-[#D8DCE1] border border-white/20">

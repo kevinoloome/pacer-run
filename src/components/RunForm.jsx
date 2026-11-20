@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import AuthInput from "@/components/AuthInput";
 import { parsePace } from "@/lib/pace";
 import { NO_LIMIT } from "@/lib/runs";
@@ -24,7 +24,17 @@ export default function RunForm({ initial = {}, minCapacity = 1, submitLabel, bu
   const [pace, setPace] = useState(initial.pace ?? "");
   const [surface, setSurface] = useState(initial.surface ?? "trail");
   const [note, setNote] = useState(initial.note ?? "");
+  const [runType, setRunType] = useState(initial.runType ?? "run");
+  const [communityName, setCommunityName] = useState(initial.communityName ?? "");
   const [error, setError] = useState("");
+
+  // /post?type=group opens the form already set to a community run.
+  useEffect(() => {
+    if (initial.runType) return;
+    try {
+      if (new URLSearchParams(window.location.search).get("type") === "group") setRunType("group");
+    } catch {}
+  }, [initial.runType]);
   const [loading, setLoading] = useState(false);
 
   // Editing keeps the run's own zone; a new run uses the city's zone.
@@ -79,6 +89,8 @@ export default function RunForm({ initial = {}, minCapacity = 1, submitLabel, bu
         paceSec,
         capacity: cap,
         note: note.trim(),
+        runType,
+        communityName: runType === "group" ? communityName.trim() : "",
       });
     } catch (err) {
       setError(err?.message || "Couldn't save this run, try again.");
@@ -89,6 +101,42 @@ export default function RunForm({ initial = {}, minCapacity = 1, submitLabel, bu
 
   return (
     <form noValidate onSubmit={handleSubmit}>
+      <div className="mb-3.5">
+        <div className="text-[12px] font-medium text-muted mb-1.5">Type of run</div>
+        <div className="flex gap-2">
+          {[
+            { value: "run", label: "🏃 Casual run" },
+            { value: "group", label: "👥 Group / community run" },
+          ].map((t) => (
+            <button
+              key={t.value}
+              type="button"
+              onClick={() => setRunType(t.value)}
+              className={`flex-1 rounded-xl py-2.5 text-[13px] font-medium border ${
+                runType === t.value
+                  ? "bg-accent/15 border-accent text-accent"
+                  : "bg-bg-elevated border-line text-muted"
+              }`}
+            >
+              {t.label}
+            </button>
+          ))}
+        </div>
+        {runType === "group" && (
+          <div className="mt-3">
+            <AuthInput
+              label="Community or group name (optional)"
+              value={communityName}
+              onChange={(e) => setCommunityName(e.target.value.slice(0, 60))}
+              placeholder="e.g. We Run Nairobi"
+            />
+            <p className="text-muted text-[12px] -mt-2">
+              Open to everyone, no limit on runners. Newcomers and visitors can join too.
+            </p>
+          </div>
+        )}
+      </div>
+
       <label className="block mb-3.5">
         <div className="text-[12px] font-medium text-muted mb-1.5">City</div>
         <input

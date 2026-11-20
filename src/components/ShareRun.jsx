@@ -11,6 +11,10 @@ export function runLink(runId) {
 
 export function runShareText(run) {
   const bits = [run.when, run.distance ? `${run.distance} km` : null, run.city].filter(Boolean);
+  if (run.isGroup) {
+    const who = run.communityName ? `${run.communityName} community run` : "community run";
+    return `Join our ${who} at ${run.location} (${bits.join(", ")}) on TwendeRun:`;
+  }
   return `Join me for a run at ${run.location} (${bits.join(", ")}) on TwendeRun:`;
 }
 

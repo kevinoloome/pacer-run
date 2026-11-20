@@ -3,6 +3,7 @@ import "./globals.css";
 import { AuthProvider } from "@/lib/AuthProvider";
 import BottomNav from "@/components/BottomNav";
 import Splash from "@/components/Splash";
+import SafetyNote from "@/components/SafetyNote";
 import AccountNudge from "@/components/AccountNudge";
 import RegisterSW from "@/components/RegisterSW";
 
@@ -54,6 +55,7 @@ export default function RootLayout({ children }) {
           {children}
           <RegisterSW />
           <AccountNudge />
+        <SafetyNote />
           <BottomNav />
         </AuthProvider>
       </body>

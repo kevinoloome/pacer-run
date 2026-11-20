@@ -13,6 +13,7 @@ import { useAuth, ensureSession } from "@/lib/AuthProvider";
 import { getLocalPace, PACE_CHANGED_EVENT } from "@/lib/localPace";
 import { getHomeCity } from "@/lib/cities";
 import { fetchBlockedIds } from "@/lib/safety";
+import { askSafety } from "@/lib/safetyNote";
 import CommunityBadge from "@/components/CommunityBadge";
 
 const SURFACE_ICON = { trail: "🌲", road: "🏙️", track: "🏟️" };
@@ -121,6 +122,7 @@ export default function RunList() {
 
   // Resolves to true only when the person is now in the run.
   async function handleJoin(run) {
+    if (!(await askSafety())) return false;
     // No account yet? Quietly create a guest one so joining is one tap.
     let uid = user?.id;
     const createdGuest = !uid;

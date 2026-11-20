@@ -13,6 +13,7 @@ import { useRouter } from "next/navigation";
 import ShareRun from "@/components/ShareRun";
 import StoryComposer from "@/components/StoryComposer";
 import CommunityBadge from "@/components/CommunityBadge";
+import { askSafety } from "@/lib/safetyNote";
 import { REPORT_REASONS, reportRun, blockUser, fetchBlockedIds } from "@/lib/safety";
 
 const POLL_MS = 8000;
@@ -78,6 +79,7 @@ function RunDetail() {
   const isMember = isHost || run.isJoinedByMe;
 
   async function handleJoin() {
+    if (!(await askSafety())) return;
     setJoining(true);
     setJoinMsg("");
     try {

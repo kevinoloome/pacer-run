@@ -115,6 +115,31 @@ function ProfileForm() {
     router.replace("/");
   }
 
+  const [deleting, setDeleting] = useState(false);
+  async function handleDelete() {
+    if (
+      !window.confirm(
+        "Delete your TwendeRun account? This permanently removes your profile, your joins, messages and stories, and any upcoming runs you host. This can't be undone."
+      )
+    )
+      return;
+    if (!window.confirm("Are you sure? Tap OK to delete your account for good.")) return;
+    setDeleting(true);
+    setError("");
+    try {
+      const { error: delErr } = await supabase.rpc("delete_my_account");
+      if (delErr) throw delErr;
+      try {
+        localStorage.clear();
+      } catch {}
+      await supabase.auth.signOut().catch(() => {});
+      router.replace("/");
+    } catch (err) {
+      setError(err?.message || "Couldn't delete your account, try again.");
+      setDeleting(false);
+    }
+  }
+
   if (loading) {
     return (
       <div className="flex items-center justify-center h-[60vh] text-muted text-[13px]">Loading...</div>
@@ -186,6 +211,14 @@ function ProfileForm() {
         className="w-full bg-bg-elevated border border-line text-accent-warm font-display font-semibold text-[14px] rounded-2xl py-3.5 mt-3"
       >
         Sign out
+      </button>
+
+      <button
+        onClick={handleDelete}
+        disabled={deleting}
+        className="block mx-auto text-muted text-[12.5px] underline mt-5 disabled:opacity-60"
+      >
+        {deleting ? "Deleting..." : "Delete my account"}
       </button>
     </div>
   );
